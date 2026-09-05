@@ -26,10 +26,10 @@ export default async function EditCustomerPage({ params, searchParams }: { param
   const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-12">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div><p className="text-sm font-black uppercase tracking-widest text-blue-400">Clientes</p><h1 className="mt-2 text-4xl font-black">Editar cliente</h1></div>
-        <Link href="/admin/clientes" className="rounded-xl border border-zinc-700 px-5 py-3 font-bold">← Voltar</Link>
+    <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
+      <div className="flex flex-wrap items-end justify-between gap-5">
+        <div className="min-w-0"><p className="text-sm font-black uppercase tracking-widest text-blue-400">Vitória Informática • Clientes</p><h1 className="mt-2 text-3xl font-black sm:text-4xl">Editar cliente</h1></div>
+        <Link href="/admin/clientes" className="rounded-lg border border-zinc-700 px-3 py-2 text-sm font-bold hover:bg-zinc-800">← Clientes</Link>
       </div>
       {saved === "1" ? <div className="mt-6 rounded-2xl border border-green-500/20 bg-green-500/10 p-4 font-bold text-green-300">Cliente atualizado com sucesso.</div> : null}
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
