@@ -21,8 +21,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const name = String(data.get("name") || "").trim();
     const category = String(data.get("category") || "").trim();
     const price = Number(String(data.get("price") || "0").replace(",", "."));
+    const rawCost = String(data.get("costPrice") || "").trim();
+    const costPrice = rawCost ? Number(rawCost.replace(",", ".")) : null;
     const stockQuantity = Number.parseInt(String(data.get("stockQuantity") || "0"), 10);
-    if (!name || !productCategories.includes(category as any) || !Number.isFinite(price) || price < 0 || !Number.isInteger(stockQuantity) || stockQuantity < 0) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+    if (!name || !productCategories.includes(category as any) || !Number.isFinite(price) || price < 0 || (costPrice !== null && (!Number.isFinite(costPrice) || costPrice < 0)) || !Number.isInteger(stockQuantity) || stockQuantity < 0) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
 
     const db = getDatabase();
     const currentRows = await db.sql`SELECT images, image FROM products WHERE id = ${id} LIMIT 1`;
@@ -46,7 +48,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (badge && !["Novo", "Promoção", "Destaque"].includes(badge)) return NextResponse.json({ error: "Selo inválido" }, { status: 400 });
 
     await db.sql`
-      UPDATE products SET name = ${name}, category = ${category}, price = ${price},
+      UPDATE products SET name = ${name}, category = ${category}, price = ${price}, cost_price = ${costPrice},
       description = ${String(data.get("description") || "")}, specs = ${JSON.stringify(specs)}::jsonb,
       warranty = ${warranty}, stock_status = ${stockStatus}, stock_quantity = ${stockQuantity},
       featured = ${data.get("featured") === "on"}, badge = ${badge}, image = ${image},
