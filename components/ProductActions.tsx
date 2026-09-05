@@ -26,7 +26,7 @@ export default function ProductActions({ product }: { product: Product }) {
         {unavailable ? "Indisponível" : "Adicionar ao carrinho"}
       </button>
       <a
-        href={`https://wa.me/5562994780830?text=${message}`}
+        href={`/whatsapp?text=${message}`}
         target="_blank"
         rel="noreferrer"
         className="flex items-center justify-center gap-2 rounded-xl border border-green-700/50 px-5 py-3 text-center font-bold text-green-300 hover:bg-green-950/30"
