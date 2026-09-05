@@ -15,6 +15,13 @@ function uploadedFiles(data: FormData) {
   return files;
 }
 
+function parseSpecs(value: FormDataEntryValue | null) {
+  return String(value || "")
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export async function POST(request: Request) {
   if (!(await isAdminAuthenticated())) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
@@ -34,11 +41,12 @@ export async function POST(request: Request) {
     const manualImage = String(data.get("image") || "").trim();
     const images = uploaded.length ? uploaded : manualImage ? [manualImage] : [];
     const image = images[0] || null;
+    const specs = parseSpecs(data.get("specs"));
 
     const id = `${slugify(name)}-${Date.now()}`;
     const slug = `${slugify(name)}-${Date.now().toString().slice(-6)}`;
     const db = getDatabase();
-    await db.sql`INSERT INTO products (id, name, slug, category, price, description, warranty, stock_status, featured, badge, image, images) VALUES (${id}, ${name}, ${slug}, ${category}, ${price}, ${String(data.get("description") || "")}, ${String(data.get("warranty") || "") || null}, ${String(data.get("stockStatus") || "em_estoque")}, ${data.get("featured") === "on"}, ${String(data.get("badge") || "") || null}, ${image}, ${JSON.stringify(images)}::jsonb)`;
+    await db.sql`INSERT INTO products (id, name, slug, category, price, description, specs, warranty, stock_status, featured, badge, image, images) VALUES (${id}, ${name}, ${slug}, ${category}, ${price}, ${String(data.get("description") || "")}, ${JSON.stringify(specs)}::jsonb, ${String(data.get("warranty") || "") || null}, ${String(data.get("stockStatus") || "em_estoque")}, ${data.get("featured") === "on"}, ${String(data.get("badge") || "") || null}, ${image}, ${JSON.stringify(images)}::jsonb)`;
     return NextResponse.redirect(new URL("/admin?created=1", request.url), 303);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Não foi possível cadastrar o produto.";
