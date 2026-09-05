@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { products } from "@/data/products";
+import { requireAdmin } from "@/lib/admin-auth";
 
 export const metadata = {
   title: "Painel Administrativo",
   robots: { index: false, follow: false },
 };
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  await requireAdmin();
+
   const featured = products.filter((product) => product.featured).length;
   const promotions = products.filter((product) => product.badge === "Promoção").length;
   const available = products.filter((product) => product.stockStatus !== "indisponivel").length;
@@ -17,9 +20,12 @@ export default function AdminPage() {
         <div>
           <p className="text-sm font-black uppercase tracking-widest text-blue-400">Vitória Informática</p>
           <h1 className="mt-2 text-4xl font-black">Painel administrativo</h1>
-          <p className="mt-3 max-w-2xl text-zinc-400">Base do gerenciamento do catálogo. A próxima conexão permitirá cadastrar, editar e remover produtos sem alterar o código.</p>
+          <p className="mt-3 max-w-2xl text-zinc-400">Área protegida para gerenciamento do catálogo. A próxima etapa conectará os formulários diretamente ao banco de dados.</p>
         </div>
-        <Link href="/produtos" className="rounded-xl border border-zinc-700 px-5 py-3 font-bold hover:bg-zinc-900">Ver catálogo</Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/produtos" className="rounded-xl border border-zinc-700 px-5 py-3 font-bold hover:bg-zinc-900">Ver catálogo</Link>
+          <form action="/api/admin/logout" method="post"><button type="submit" className="rounded-xl border border-red-500/30 px-5 py-3 font-bold text-red-300 hover:bg-red-500/10">Sair</button></form>
+        </div>
       </div>
 
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -42,9 +48,9 @@ export default function AdminPage() {
         </div>
       </section>
 
-      <div className="mt-8 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-6">
-        <p className="font-black text-amber-300">Área administrativa em preparação</p>
-        <p className="mt-2 text-sm leading-6 text-zinc-300">O banco de dados do catálogo já está sendo preparado. Antes de liberar edição de produtos, o painel receberá autenticação para impedir alterações por visitantes.</p>
+      <div className="mt-8 rounded-2xl border border-green-500/20 bg-green-500/10 p-6">
+        <p className="font-black text-green-300">Painel protegido</p>
+        <p className="mt-2 text-sm leading-6 text-zinc-300">O acesso administrativo agora exige senha e utiliza sessão segura por cookie. Nenhuma credencial fica armazenada no código do site.</p>
       </div>
     </main>
   );
