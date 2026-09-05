@@ -1,8 +1,18 @@
 import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
-import { products } from "@/data/products";
+import { getCatalogProducts } from "@/lib/catalog-db";
 
-export default function Home() {
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  let products = [] as Awaited<ReturnType<typeof getCatalogProducts>>;
+
+  try {
+    products = await getCatalogProducts();
+  } catch {
+    products = [];
+  }
+
   const featured = products.filter((product) => product.featured);
   const promotions = products.filter((product) => product.badge === "Promoção");
 
@@ -42,7 +52,11 @@ export default function Home() {
           <div><p className="text-sm font-bold uppercase tracking-widest text-blue-400">Vitória Informática</p><h2 className="mt-2 text-3xl font-black">Produtos em destaque</h2><p className="mt-2 text-zinc-400">Confira alguns itens do catálogo e monte seu orçamento.</p></div>
           <Link href="/produtos" className="font-bold text-blue-400 hover:text-blue-300">Ver catálogo completo →</Link>
         </div>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{featured.map((product) => <ProductCard key={product.id} product={product} />)}</div>
+        {featured.length ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{featured.map((product) => <ProductCard key={product.id} product={product} />)}</div>
+        ) : (
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-zinc-400">Nenhum produto em destaque no momento.</div>
+        )}
       </section>
 
       <section className="border-y border-zinc-800 bg-zinc-950">
