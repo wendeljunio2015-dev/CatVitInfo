@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
+import { useFavorites } from "@/context/FavoritesContext";
 import type { Product } from "@/types/product";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -14,10 +15,20 @@ const stockLabel = {
 
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
   const unavailable = product.stockStatus === "indisponivel";
+  const favorite = isFavorite(product.id);
 
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+    <article className="relative flex h-full flex-col rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+      <button
+        type="button"
+        onClick={() => toggleFavorite(product.id)}
+        aria-label={favorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        className="absolute right-7 top-7 z-10 flex h-10 w-10 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950/90 text-lg hover:bg-zinc-800"
+      >
+        {favorite ? "♥" : "♡"}
+      </button>
       <Link href={`/produto/${product.slug}`} className="mb-5 flex aspect-video items-center justify-center overflow-hidden rounded-xl bg-zinc-950">
         {product.image ? <img src={product.image} alt={product.name} className="h-full w-full object-contain p-4" /> : <span className="text-5xl">🖥️</span>}
       </Link>
