@@ -1,12 +1,32 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "Vitória Informática",
-  description: "Tecnologia com qualidade, garantia e o melhor preço.",
+  metadataBase: new URL("https://catvitinfo.netlify.app"),
+  title: {
+    default: "Vitória Informática | Informática em Goiânia",
+    template: "%s | Vitória Informática",
+  },
+  description: "Catálogo online da Vitória Informática em Goiânia - GO. Processadores, kits upgrade, SSDs, memórias e componentes para computador.",
+  applicationName: "Vitória Informática",
+  keywords: ["Vitória Informática", "informática Goiânia", "peças para computador", "processadores", "SSD", "memória RAM", "kit upgrade"],
+  openGraph: {
+    type: "website",
+    locale: "pt_BR",
+    siteName: "Vitória Informática",
+    title: "Vitória Informática | Informática em Goiânia",
+    description: "Tecnologia, componentes e orçamento rápido pelo WhatsApp em Goiânia - GO.",
+  },
+  robots: { index: true, follow: true },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#09090b",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
