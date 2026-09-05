@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getDatabase } from "@netlify/database";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getCatalogProductById } from "@/lib/catalog-db";
 import { productCategories } from "@/data/categories";
@@ -11,14 +12,18 @@ export const dynamic = "force-dynamic";
 export default async function EditProductPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ saved?: string }> }) {
   await requireAdmin(); const { id } = await params; const { saved } = await searchParams;
   const product = await getCatalogProductById(id); if (!product) notFound();
+  const db = getDatabase();
+  const costRows = await db.sql`SELECT cost_price FROM products WHERE id=${id} LIMIT 1`;
+  const costPrice = costRows.length && costRows[0].cost_price != null ? Number(costRows[0].cost_price) : "";
   const images = product.images ?? (product.image ? [product.image] : []); const remainingSlots = Math.max(0, 5 - images.length);
   return <main className="mx-auto max-w-5xl px-6 py-12">
-    <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-black uppercase tracking-widest text-blue-400">Painel administrativo</p><h1 className="mt-2 text-4xl font-black">Editar produto</h1><p className="mt-3 text-zinc-400">Altere informações, estoque, especificações e fotos.</p></div><Link href="/admin" className="rounded-xl border border-zinc-700 px-5 py-3 font-bold">← Voltar ao painel</Link></div>
+    <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm font-black uppercase tracking-widest text-blue-400">Painel administrativo</p><h1 className="mt-2 text-4xl font-black">Editar produto</h1><p className="mt-3 text-zinc-400">Altere informações, estoque, custo, especificações e fotos.</p></div><Link href="/admin" className="rounded-xl border border-zinc-700 px-5 py-3 font-bold">← Voltar ao painel</Link></div>
     {saved === "1" && <div className="mt-6 rounded-2xl border border-green-500/20 bg-green-500/10 p-4 font-bold text-green-300">Produto atualizado com sucesso.</div>}
     <form action={`/api/admin/products/${encodeURIComponent(product.id)}`} method="post" encType="multipart/form-data" className="mt-8 grid gap-5 rounded-3xl border border-zinc-800 bg-zinc-900 p-6 md:grid-cols-2 md:p-8">
       <div><label className="text-sm font-bold text-zinc-300">Nome do produto</label><input required name="name" defaultValue={product.name} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3"/></div>
       <div><label className="text-sm font-bold text-zinc-300">Categoria</label><select required name="category" defaultValue={product.category} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3">{productCategories.map(c => <option key={c}>{c}</option>)}</select></div>
-      <div><label className="text-sm font-bold text-zinc-300">Preço</label><input required name="price" type="number" min="0" step="0.01" defaultValue={product.price} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3"/></div>
+      <div><label className="text-sm font-bold text-zinc-300">Preço de venda</label><input required name="price" type="number" min="0" step="0.01" defaultValue={product.price} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3"/></div>
+      <div><label className="text-sm font-bold text-zinc-300">Preço de custo</label><input name="costPrice" type="number" min="0" step="0.01" defaultValue={costPrice} placeholder="Opcional" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3"/><p className="mt-2 text-xs text-zinc-500">Usado apenas no administrativo para cálculo de lucro.</p></div>
       <div><label className="text-sm font-bold text-zinc-300">Garantia</label><input name="warranty" defaultValue={product.warranty ?? ""} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3"/></div>
       <div><label className="text-sm font-bold text-zinc-300">Quantidade em estoque</label><input required name="stockQuantity" type="number" min="0" step="1" defaultValue={product.stockQuantity ?? (product.stockStatus === "indisponivel" ? 0 : 1)} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3"/><p className="mt-2 text-xs text-zinc-500">0 = Indisponível • 1–2 = Últimas unidades • 3+ = Em estoque</p></div>
       <div><label className="text-sm font-bold text-zinc-300">Selo</label><select name="badge" defaultValue={product.badge ?? ""} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3"><option value="">Sem selo</option><option>Novo</option><option>Promoção</option><option>Destaque</option></select></div>
