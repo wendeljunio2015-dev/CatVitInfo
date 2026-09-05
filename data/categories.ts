@@ -1,4 +1,5 @@
 export const productCategories = [
+  "Computadores",
   "Processadores",
   "Kits Upgrade",
   "Placas-mãe",
