@@ -1,9 +1,10 @@
 import type { MetadataRoute } from "next";
-import { products } from "@/data/products";
+import { getCatalogProducts } from "@/lib/catalog-db";
 
 const baseUrl = "https://catvitinfo.netlify.app";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const products = await getCatalogProducts();
   const productPages = products.map((product) => ({
     url: `${baseUrl}/produto/${product.slug}`,
     changeFrequency: "weekly" as const,
