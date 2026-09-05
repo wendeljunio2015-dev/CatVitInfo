@@ -38,6 +38,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     };
     const items = Array.isArray(order.items) ? order.items : [];
 
+    if (order.stock_deducted_at && !order.stock_restored_at && !["concluido", "cancelado"].includes(status)) {
+      throw new Error("Venda concluída não pode voltar para um status aberto. Cancele a venda para restaurar estoque e comissão com segurança.");
+    }
+
     if (status === "cancelado" && order.stock_deducted_at && !order.stock_restored_at) {
       if (order.seller_id) {
         const paid = await client.query(
