@@ -16,6 +16,7 @@ function mapProduct(row: any): Product {
     specs: Array.isArray(row.specs) ? row.specs.map(String) : [],
     warranty: row.warranty ? String(row.warranty) : undefined,
     stockStatus: row.stock_status as Product["stockStatus"],
+    stockQuantity: row.stock_quantity == null ? undefined : Number(row.stock_quantity),
     featured: Boolean(row.featured),
     badge: row.badge ? (String(row.badge) as Product["badge"]) : undefined,
     image: gallery[0],
@@ -23,11 +24,14 @@ function mapProduct(row: any): Product {
   };
 }
 
+const productColumns = `id, name, slug, category, price, description, specs, warranty, stock_status, stock_quantity, featured, badge, image`;
+
 export async function getCatalogProducts(): Promise<Product[]> {
   const db = getDatabase();
   const rows = await db.sql`
-    SELECT id, name, slug, category, price, description, specs, warranty, stock_status, featured, badge, image,
-           to_jsonb(products)->'images' AS images
+    SELECT id, name, slug, category, price, description, specs, warranty, stock_status,
+           (to_jsonb(products)->>'stock_quantity')::integer AS stock_quantity,
+           featured, badge, image, to_jsonb(products)->'images' AS images
     FROM products
     ORDER BY created_at DESC
   `;
@@ -37,8 +41,9 @@ export async function getCatalogProducts(): Promise<Product[]> {
 export async function getCatalogProductBySlug(slug: string): Promise<Product | null> {
   const db = getDatabase();
   const rows = await db.sql`
-    SELECT id, name, slug, category, price, description, specs, warranty, stock_status, featured, badge, image,
-           to_jsonb(products)->'images' AS images
+    SELECT id, name, slug, category, price, description, specs, warranty, stock_status,
+           (to_jsonb(products)->>'stock_quantity')::integer AS stock_quantity,
+           featured, badge, image, to_jsonb(products)->'images' AS images
     FROM products WHERE slug = ${slug} LIMIT 1
   `;
   return rows.length ? mapProduct(rows[0]) : null;
@@ -47,8 +52,9 @@ export async function getCatalogProductBySlug(slug: string): Promise<Product | n
 export async function getCatalogProductById(id: string): Promise<Product | null> {
   const db = getDatabase();
   const rows = await db.sql`
-    SELECT id, name, slug, category, price, description, specs, warranty, stock_status, featured, badge, image,
-           to_jsonb(products)->'images' AS images
+    SELECT id, name, slug, category, price, description, specs, warranty, stock_status,
+           (to_jsonb(products)->>'stock_quantity')::integer AS stock_quantity,
+           featured, badge, image, to_jsonb(products)->'images' AS images
     FROM products WHERE id = ${id} LIMIT 1
   `;
   return rows.length ? mapProduct(rows[0]) : null;
