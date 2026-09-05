@@ -15,17 +15,21 @@ export async function POST(request: Request) {
     if (!name || !email || password.length < 6) return NextResponse.redirect(new URL("/cliente/cadastro?error=invalid", request.url), 303);
 
     const db = getDatabase();
-    const existing = await db.sql`SELECT id, password_hash FROM customers WHERE LOWER(email) = ${email} LIMIT 1`;
+    const existing = phone
+      ? await db.sql`SELECT id,password_hash FROM customers WHERE LOWER(email)=${email} OR phone=${phone} ORDER BY CASE WHEN LOWER(email)=${email} THEN 0 ELSE 1 END LIMIT 1`
+      : await db.sql`SELECT id,password_hash FROM customers WHERE LOWER(email)=${email} LIMIT 1`;
+
     if (existing.length && existing[0].password_hash) return NextResponse.redirect(new URL("/cliente/login?error=exists", request.url), 303);
 
     let id: string;
     if (existing.length) {
       id = String(existing[0].id);
-      await db.sql`UPDATE customers SET name=${name}, phone=${phone || null}, city=${city}, password_hash=${hashPassword(password)}, updated_at=NOW() WHERE id=${id}`;
+      await db.sql`UPDATE customers SET name=${name}, email=${email}, phone=${phone || null}, city=${city}, password_hash=${hashPassword(password)}, updated_at=NOW() WHERE id=${id}`;
     } else {
       id = crypto.randomUUID();
       await db.sql`INSERT INTO customers (id,name,email,phone,city,password_hash) VALUES (${id},${name},${email},${phone || null},${city},${hashPassword(password)})`;
     }
+
     const response = NextResponse.redirect(new URL("/cliente/minha-conta", request.url), 303);
     response.cookies.set(CUSTOMER_COOKIE, createCustomerSessionToken(id), customerCookieOptions());
     return response;
