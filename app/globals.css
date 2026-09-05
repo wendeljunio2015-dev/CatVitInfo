@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+:root { color-scheme: dark; }
+
+html { scroll-behavior: smooth; }
+body { margin: 0; background: #09090b; color: #fafafa; font-family: Arial, Helvetica, sans-serif; }
+button, a { transition: 160ms ease; }
