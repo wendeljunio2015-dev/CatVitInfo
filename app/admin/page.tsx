@@ -50,6 +50,10 @@ export default async function AdminPage() {
         <AdminImageInput />
         <input name="image" placeholder="Ou cole uma URL de imagem (opcional)" className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 md:col-span-2"/>
         <textarea name="description" placeholder="Descrição" rows={4} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 md:col-span-2"/>
+        <div className="md:col-span-2">
+          <textarea name="specs" placeholder={'Especificações técnicas — uma por linha. Ex.:\n6 núcleos / 12 threads\nAté 4,8 GHz\nSocket LGA1200'} rows={6} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3"/>
+          <p className="mt-2 text-xs text-zinc-500">Cada linha será exibida como uma especificação separada na página do produto.</p>
+        </div>
         <label className="flex items-center gap-3"><input type="checkbox" name="featured"/> Mostrar como destaque</label>
         <button disabled={!databaseReady} className="rounded-xl bg-blue-600 px-5 py-3 font-black hover:bg-blue-500 disabled:bg-zinc-700">Cadastrar produto</button>
       </form>
