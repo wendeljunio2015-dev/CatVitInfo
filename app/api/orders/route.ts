@@ -1,8 +1,9 @@
 import { getDatabase } from "@netlify/database";
 import { NextResponse } from "next/server";
 import { getAuthenticatedCustomerId } from "@/lib/customer-auth";
+import { getSellerRef } from "@/lib/seller-ref";
 
-const whatsappNumber = "5562994780830";
+const storeWhatsApp = "5562994780830";
 type RequestedItem = { productId?: string; quantity?: number };
 
 function makeOrderNumber() {
@@ -62,15 +63,30 @@ export async function POST(request: Request) {
       }
     }
 
+    let sellerId: string | null = null;
+    let sellerName: string | null = null;
+    let sellerCommissionRate: number | null = null;
+    let whatsappNumber = storeWhatsApp;
+    const sellerRef = await getSellerRef();
+    if (sellerRef) {
+      const sellerRows = await db.sql`SELECT id,name,phone,commission_rate FROM sellers WHERE id=${sellerRef} AND active=TRUE LIMIT 1`;
+      if (sellerRows.length) {
+        sellerId = String(sellerRows[0].id);
+        sellerName = String(sellerRows[0].name);
+        sellerCommissionRate = Number(sellerRows[0].commission_rate);
+        whatsappNumber = String(sellerRows[0].phone || storeWhatsApp).replace(/\D/g, "");
+      }
+    }
+
     const total = items.reduce((sum, item) => sum + item.subtotal, 0);
     const id = crypto.randomUUID();
     const orderNumber = makeOrderNumber();
-    await db.sql`INSERT INTO orders (id,order_number,customer_id,customer_name,items,total,status,source) VALUES (${id},${orderNumber},${customerId},${customerName},${JSON.stringify(items)}::jsonb,${total},'novo','whatsapp')`;
+    await db.sql`INSERT INTO orders (id,order_number,customer_id,customer_name,items,total,status,source,seller_id,seller_name,seller_commission_rate) VALUES (${id},${orderNumber},${customerId},${customerName},${JSON.stringify(items)}::jsonb,${total},'novo','whatsapp',${sellerId},${sellerName},${sellerCommissionRate})`;
 
     const money = new Intl.NumberFormat("pt-BR", { style:"currency", currency:"BRL" });
-    const lines = [`Olá! Gostaria de solicitar o orçamento ${orderNumber} na Vitória Informática:`, customerName ? `Cliente: ${customerName}` : "", customerPhone ? `WhatsApp: ${customerPhone}` : "", "", ...items.map((item) => `• ${item.quantity}x ${item.name} — ${money.format(item.subtotal)}`), "", `Total estimado: ${money.format(total)}`, "", "Por favor, confirme disponibilidade, garantia e condições de retirada/entrega em Goiânia."].filter(Boolean);
+    const lines = [`Olá! Gostaria de solicitar o orçamento ${orderNumber} na Vitória Informática:`, sellerName ? `Atendimento: ${sellerName}` : "", customerName ? `Cliente: ${customerName}` : "", customerPhone ? `WhatsApp: ${customerPhone}` : "", "", ...items.map((item) => `• ${item.quantity}x ${item.name} — ${money.format(item.subtotal)}`), "", `Total estimado: ${money.format(total)}`, "", "Por favor, confirme disponibilidade, garantia e condições de retirada/entrega em Goiânia."].filter(Boolean);
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
-    return NextResponse.json({ ok:true, orderNumber, total, customerId, whatsappUrl });
+    return NextResponse.json({ ok:true, orderNumber, total, customerId, sellerId, whatsappUrl });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Não foi possível registrar o orçamento.";
     return NextResponse.json({ error: message }, { status: 400 });
