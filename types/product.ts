@@ -13,4 +13,5 @@ export interface Product {
   featured?: boolean;
   badge?: "Novo" | "Promoção" | "Destaque";
   image?: string;
+  images?: string[];
 }
