@@ -22,15 +22,6 @@ export async function POST(request: Request) {
   const client = await db.pool.connect();
   try {
     await client.query("BEGIN");
-    const existing = await client.query(
-      "SELECT id FROM commission_settlements WHERE seller_id=$1 AND period_month=$2::date FOR UPDATE",
-      [sellerId, periodMonth],
-    );
-    if (existing.rows.length) {
-      await client.query("ROLLBACK");
-      return NextResponse.redirect(new URL(`/admin/comissoes?month=${encodeURIComponent(monthValue)}&error=paid`, request.url), 303);
-    }
-
     const seller = await client.query("SELECT id,name FROM sellers WHERE id=$1 FOR UPDATE", [sellerId]);
     if (!seller.rows.length) {
       await client.query("ROLLBACK");
@@ -50,7 +41,16 @@ export async function POST(request: Request) {
     );
     const row = totals.rows[0];
     const commissionTotal = Number(row.commission_total || 0);
-    if (commissionTotal <= 0) {
+    const paid = await client.query(
+      `SELECT COALESCE(SUM(paid_amount),0)::numeric AS paid_total
+       FROM commission_settlements
+       WHERE seller_id=$1 AND period_month=$2::date`,
+      [sellerId, periodMonth],
+    );
+    const paidTotal = Number(paid.rows[0]?.paid_total || 0);
+    const pending = Math.max(0, Number((commissionTotal - paidTotal).toFixed(2)));
+
+    if (commissionTotal <= 0 || pending <= 0) {
       await client.query("ROLLBACK");
       return NextResponse.redirect(new URL(`/admin/comissoes?month=${encodeURIComponent(monthValue)}&error=empty`, request.url), 303);
     }
@@ -58,8 +58,8 @@ export async function POST(request: Request) {
     await client.query(
       `INSERT INTO commission_settlements
        (id,seller_id,period_month,sales_count,sales_total,commission_total,paid_amount,status)
-       VALUES ($1,$2,$3::date,$4,$5,$6,$6,'pago')`,
-      [crypto.randomUUID(), sellerId, periodMonth, Number(row.sales_count || 0), Number(row.sales_total || 0), commissionTotal],
+       VALUES ($1,$2,$3::date,$4,$5,$6,$7,'pago')`,
+      [crypto.randomUUID(), sellerId, periodMonth, Number(row.sales_count || 0), Number(row.sales_total || 0), commissionTotal, pending],
     );
 
     await client.query("COMMIT");
