@@ -21,6 +21,10 @@ interface CartContextValue {
 const CartContext = createContext<CartContextValue | null>(null);
 const STORAGE_KEY = "vitoria-informatica-cart";
 
+function maxQuantity(product: Product) {
+  return Math.max(0, Number(product.stockQuantity ?? 0));
+}
+
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -29,7 +33,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     const saved = window.localStorage.getItem(STORAGE_KEY);
     if (saved) {
       try {
-        setItems(JSON.parse(saved));
+        const parsed = JSON.parse(saved) as CartItem[];
+        setItems(parsed
+          .map((item) => ({ ...item, quantity: Math.min(Math.max(1, Number(item.quantity) || 1), maxQuantity(item.product)) }))
+          .filter((item) => item.quantity > 0));
       } catch {
         window.localStorage.removeItem(STORAGE_KEY);
       }
@@ -42,10 +49,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [items, loaded]);
 
   const addItem = (product: Product) => {
+    const limit = maxQuantity(product);
+    if (limit <= 0 || product.stockStatus === "indisponivel") return;
     setItems((current) => {
       const found = current.find((item) => item.product.id === product.id);
       if (found) {
-        return current.map((item) => item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
+        return current.map((item) => item.product.id === product.id
+          ? { ...item, product, quantity: Math.min(item.quantity + 1, limit) }
+          : item);
       }
       return [...current, { product, quantity: 1 }];
     });
@@ -55,7 +66,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
 
   const updateQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) return removeItem(productId);
-    setItems((current) => current.map((item) => item.product.id === productId ? { ...item, quantity } : item));
+    setItems((current) => current.map((item) => {
+      if (item.product.id !== productId) return item;
+      const limit = maxQuantity(item.product);
+      return { ...item, quantity: Math.min(Math.max(1, quantity), limit) };
+    }).filter((item) => item.quantity > 0));
   };
 
   const clearCart = () => setItems([]);
