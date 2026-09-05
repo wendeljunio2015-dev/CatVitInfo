@@ -1,26 +1,39 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
-const whatsappNumber = "5562994780830";
 
 export default function CartPage() {
   const { items, total, updateQuantity, removeItem, clearCart } = useCart();
+  const [customerName, setCustomerName] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
 
-  const checkout = () => {
-    if (!items.length) return;
-    const lines = [
-      "Olá! Gostaria de solicitar um orçamento na Vitória Informática:",
-      "",
-      ...items.map((item) => `• ${item.quantity}x ${item.product.name} — ${money.format(item.product.price * item.quantity)}`),
-      "",
-      `Total estimado: ${money.format(total)}`,
-      "",
-      "Por favor, confirme disponibilidade, garantia e condições de retirada/entrega em Goiânia.",
-    ];
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`, "_blank", "noopener,noreferrer");
+  const checkout = async () => {
+    if (!items.length || sending) return;
+    setSending(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName,
+          items: items.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Não foi possível registrar o orçamento.");
+      window.open(result.whatsappUrl, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Não foi possível registrar o orçamento.");
+    } finally {
+      setSending(false);
+    }
   };
 
   if (!items.length) {
@@ -66,8 +79,13 @@ export default function CartPage() {
           <span className="text-zinc-400">Total estimado</span>
           <strong className="text-3xl text-blue-500">{money.format(total)}</strong>
         </div>
-        <p className="mt-3 text-sm leading-6 text-zinc-400">O valor final, disponibilidade e garantia serão confirmados pela Vitória Informática. Atendimento local em Goiânia - GO.</p>
-        <button onClick={checkout} className="mt-6 w-full rounded-xl bg-green-600 px-5 py-4 font-black hover:bg-green-500">Enviar orçamento pelo WhatsApp</button>
+        <div className="mt-5">
+          <label className="text-sm font-bold text-zinc-300">Seu nome (opcional)</label>
+          <input value={customerName} onChange={(event) => setCustomerName(event.target.value)} maxLength={120} placeholder="Como podemos te chamar?" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3" />
+        </div>
+        <p className="mt-4 text-sm leading-6 text-zinc-400">Antes de abrir o WhatsApp, o orçamento será registrado para facilitar o atendimento. O valor final, disponibilidade e garantia serão confirmados pela Vitória Informática. Atendimento local em Goiânia - GO.</p>
+        {error ? <p className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm font-bold text-red-300">{error}</p> : null}
+        <button onClick={checkout} disabled={sending} className="mt-6 w-full rounded-xl bg-green-600 px-5 py-4 font-black hover:bg-green-500 disabled:cursor-not-allowed disabled:bg-zinc-700">{sending ? "Registrando orçamento..." : "Enviar orçamento pelo WhatsApp"}</button>
       </aside>
     </main>
   );
