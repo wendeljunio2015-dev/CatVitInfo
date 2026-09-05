@@ -12,23 +12,19 @@ export async function POST(request: Request) {
     const phone = normalizePhone(String(data.get("phone") || ""));
     const password = String(data.get("password") || "");
     const city = String(data.get("city") || "").trim().slice(0, 120) || null;
-    if (!name || !email || password.length < 6) return NextResponse.redirect(new URL("/cliente/cadastro?error=invalid", request.url), 303);
+    if (!name || !email || password.length < 8) return NextResponse.redirect(new URL("/cliente/cadastro?error=invalid", request.url), 303);
 
     const db = getDatabase();
-    const existing = phone
-      ? await db.sql`SELECT id,password_hash FROM customers WHERE LOWER(email)=${email} OR phone=${phone} ORDER BY CASE WHEN LOWER(email)=${email} THEN 0 ELSE 1 END LIMIT 1`
-      : await db.sql`SELECT id,password_hash FROM customers WHERE LOWER(email)=${email} LIMIT 1`;
+    const emailMatch = await db.sql`SELECT id,password_hash FROM customers WHERE LOWER(email)=${email} LIMIT 1`;
+    if (emailMatch.length) return NextResponse.redirect(new URL("/cliente/cadastro?error=exists", request.url), 303);
 
-    if (existing.length && existing[0].password_hash) return NextResponse.redirect(new URL("/cliente/login?error=exists", request.url), 303);
-
-    let id: string;
-    if (existing.length) {
-      id = String(existing[0].id);
-      await db.sql`UPDATE customers SET name=${name}, email=${email}, phone=${phone || null}, city=${city}, password_hash=${hashPassword(password)}, updated_at=NOW() WHERE id=${id}`;
-    } else {
-      id = crypto.randomUUID();
-      await db.sql`INSERT INTO customers (id,name,email,phone,city,password_hash) VALUES (${id},${name},${email},${phone || null},${city},${hashPassword(password)})`;
+    if (phone) {
+      const phoneMatch = await db.sql`SELECT id FROM customers WHERE phone=${phone} LIMIT 1`;
+      if (phoneMatch.length) return NextResponse.redirect(new URL("/cliente/cadastro?error=phone_exists", request.url), 303);
     }
+
+    const id = crypto.randomUUID();
+    await db.sql`INSERT INTO customers (id,name,email,phone,city,password_hash) VALUES (${id},${name},${email},${phone || null},${city},${hashPassword(password)})`;
 
     const response = NextResponse.redirect(new URL("/cliente/minha-conta", request.url), 303);
     response.cookies.set(CUSTOMER_COOKIE, createCustomerSessionToken(id), customerCookieOptions());
