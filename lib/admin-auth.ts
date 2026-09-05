@@ -30,8 +30,12 @@ export function isValidAdminPassword(password: string) {
   return receivedBuffer.length === expectedBuffer.length && timingSafeEqual(receivedBuffer, expectedBuffer);
 }
 
-export async function requireAdmin() {
+export async function isAdminAuthenticated() {
   const cookieStore = await cookies();
   const token = cookieStore.get(ADMIN_COOKIE)?.value;
-  if (!isValidAdminSessionToken(token)) redirect("/admin/login");
+  return isValidAdminSessionToken(token);
+}
+
+export async function requireAdmin() {
+  if (!(await isAdminAuthenticated())) redirect("/admin/login");
 }
