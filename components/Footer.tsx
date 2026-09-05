@@ -6,13 +6,25 @@ function WhatsAppIcon() {
   );
 }
 
+function InstagramIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>;
+}
+
+function LocationIcon() {
+  return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>;
+}
+
 export default function Footer() {
   return (
     <footer className="border-t border-zinc-800 bg-zinc-950">
       <div className="mx-auto max-w-7xl px-6 py-10 text-sm text-zinc-400">
         <p className="font-bold text-white">Vitória Informática • Goiânia - GO</p>
         <p className="mt-2">Atendimento e orçamento pelo WhatsApp. Consulte disponibilidade e garantia de cada produto.</p>
-        <a href="/whatsapp" target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-xs font-black text-white hover:bg-green-500"><WhatsAppIcon />Falar no WhatsApp</a>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <a href="/whatsapp" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-xs font-black text-white hover:bg-green-500"><WhatsAppIcon />WhatsApp</a>
+          <a href="https://www.instagram.com/vitoria_infor/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-pink-500/40 px-3 py-2 text-xs font-black text-pink-300 hover:bg-pink-500/10"><InstagramIcon />Instagram</a>
+          <a href="https://share.google/Gunuz7hpOrBmtrTol" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-blue-500/40 px-3 py-2 text-xs font-black text-blue-300 hover:bg-blue-500/10"><LocationIcon />Localização da Loja</a>
+        </div>
         <p className="mt-4">Não realizamos envio para todo o Brasil. Consulte as opções disponíveis para sua região.</p>
       </div>
     </footer>
