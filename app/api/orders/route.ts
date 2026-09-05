@@ -30,16 +30,16 @@ export async function POST(request: Request) {
     const rows = await db.sql`SELECT id, name, price, stock_quantity FROM products WHERE id = ANY(${ids}::text[])`;
     const productMap = new Map(rows.map((row: any) => [String(row.id), row]));
     const items = [] as Array<{ productId: string; name: string; quantity: number; unitPrice: number; subtotal: number }>;
+
     for (const requested of normalized) {
       const product = productMap.get(requested.productId) as any;
-      if (!product) continue;
+      if (!product) return NextResponse.json({ error: "Um produto do carrinho não está mais disponível no catálogo. Remova-o e tente novamente." }, { status: 409 });
       const available = Number(product.stock_quantity ?? 0);
-      if (available <= 0) continue;
-      const quantity = Math.min(requested.quantity, available);
+      if (available <= 0) return NextResponse.json({ error: `${String(product.name)} está indisponível no momento. Remova o item do carrinho.` }, { status: 409 });
+      if (requested.quantity > available) return NextResponse.json({ error: `${String(product.name)} possui apenas ${available} unidade(s) disponível(is). Ajuste a quantidade no carrinho.` }, { status: 409 });
       const unitPrice = Number(product.price);
-      items.push({ productId: requested.productId, name: String(product.name), quantity, unitPrice, subtotal: unitPrice * quantity });
+      items.push({ productId: requested.productId, name: String(product.name), quantity: requested.quantity, unitPrice, subtotal: unitPrice * requested.quantity });
     }
-    if (!items.length) return NextResponse.json({ error: "Nenhum item disponível no momento" }, { status: 409 });
 
     let customerId = await getAuthenticatedCustomerId();
     if (customerId) {
