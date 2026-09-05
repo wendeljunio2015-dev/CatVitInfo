@@ -24,7 +24,7 @@ export default async function EditProductPage({ params, searchParams }: { params
         <div>
           <p className="text-sm font-black uppercase tracking-widest text-blue-400">Painel administrativo</p>
           <h1 className="mt-2 text-4xl font-black">Editar produto</h1>
-          <p className="mt-3 text-zinc-400">Altere as informações e as fotos sem recriar o produto.</p>
+          <p className="mt-3 text-zinc-400">Altere informações, especificações e fotos sem recriar o produto.</p>
         </div>
         <Link href="/admin" className="rounded-xl border border-zinc-700 px-5 py-3 font-bold">← Voltar ao painel</Link>
       </div>
@@ -71,31 +71,37 @@ export default async function EditProductPage({ params, searchParams }: { params
           <label className="text-sm font-bold text-zinc-300">Descrição</label>
           <textarea name="description" rows={5} defaultValue={product.description} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3" />
         </div>
+        <div className="md:col-span-2">
+          <label className="text-sm font-bold text-zinc-300">Especificações técnicas</label>
+          <textarea name="specs" rows={7} defaultValue={(product.specs ?? []).join("\n")} placeholder={'Uma especificação por linha. Ex.:\n6 núcleos / 12 threads\nAté 4,8 GHz\nSocket LGA1200'} className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3" />
+          <p className="mt-2 text-xs text-zinc-500">Digite uma especificação por linha. Elas aparecerão organizadas na página do produto.</p>
+        </div>
 
         <div className="md:col-span-2">
           <div className="flex items-end justify-between gap-4">
             <div>
               <h2 className="text-lg font-black">Fotos atuais</h2>
-              <p className="mt-1 text-sm text-zinc-500">Marque uma foto para removê-la. A primeira foto mantida será a principal.</p>
+              <p className="mt-1 text-sm text-zinc-500">Escolha qual foto será a principal ou marque imagens para remover.</p>
             </div>
             <span className="text-sm font-bold text-zinc-400">{images.length}/5 fotos</span>
           </div>
           {images.length ? (
             <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-5">
               {images.map((url, index) => (
-                <label key={url} className="group rounded-2xl border border-zinc-800 bg-zinc-950 p-2">
+                <div key={url} className="rounded-2xl border border-zinc-800 bg-zinc-950 p-2">
                   <div className="relative aspect-square overflow-hidden rounded-xl">
                     <img src={url} alt={`${product.name} - foto ${index + 1}`} className="h-full w-full object-contain" />
-                    {index === 0 ? <span className="absolute left-2 top-2 rounded-full bg-blue-600 px-2 py-1 text-[10px] font-black">Principal</span> : null}
+                    {index === 0 ? <span className="absolute left-2 top-2 rounded-full bg-blue-600 px-2 py-1 text-[10px] font-black">Principal atual</span> : null}
                   </div>
-                  <span className="mt-2 flex items-center gap-2 text-xs text-red-300"><input type="checkbox" name="removeImages" value={url} /> Remover</span>
-                </label>
+                  <label className="mt-2 flex items-center gap-2 text-xs text-blue-300"><input type="radio" name="primaryImage" value={url} defaultChecked={index === 0} /> Principal</label>
+                  <label className="mt-2 flex items-center gap-2 text-xs text-red-300"><input type="checkbox" name="removeImages" value={url} /> Remover</label>
+                </div>
               ))}
             </div>
           ) : <div className="mt-4 rounded-xl border border-dashed border-zinc-700 p-5 text-sm text-zinc-500">Este produto ainda não possui fotos.</div>}
         </div>
 
-        {remainingSlots > 0 ? <AdminImageInput maxFiles={remainingSlots} /> : <p className="md:col-span-2 text-sm text-zinc-500">Para adicionar uma nova foto, marque ao menos uma foto atual para remover e salve. Depois volte à edição.</p>}
+        {remainingSlots > 0 ? <AdminImageInput maxFiles={remainingSlots} /> : <p className="md:col-span-2 text-sm text-zinc-500">Para adicionar uma nova foto, remova uma das fotos atuais e salve. Depois volte à edição.</p>}
 
         <label className="flex items-center gap-3 md:col-span-2"><input type="checkbox" name="featured" defaultChecked={product.featured} /> <span className="font-bold">Mostrar como destaque</span></label>
         <div className="flex flex-wrap gap-3 md:col-span-2">
