@@ -28,9 +28,9 @@ export async function POST(request: Request) {
 
     const db = getDatabase();
     const ids = normalized.map((item) => item.productId);
-    const rows = await db.sql`SELECT id, name, price, stock_quantity FROM products WHERE id = ANY(${ids}::text[])`;
+    const rows = await db.sql`SELECT id, name, price, cost_price, stock_quantity FROM products WHERE id = ANY(${ids}::text[])`;
     const productMap = new Map(rows.map((row: any) => [String(row.id), row]));
-    const items = [] as Array<{ productId: string; name: string; quantity: number; unitPrice: number; subtotal: number }>;
+    const items = [] as Array<{ productId: string; name: string; quantity: number; unitPrice: number; subtotal: number; unitCost: number | null; costSubtotal: number | null }>;
 
     for (const requested of normalized) {
       const product = productMap.get(requested.productId) as any;
@@ -39,7 +39,8 @@ export async function POST(request: Request) {
       if (available <= 0) return NextResponse.json({ error: `${String(product.name)} está indisponível no momento. Remova o item do carrinho.` }, { status: 409 });
       if (requested.quantity > available) return NextResponse.json({ error: `${String(product.name)} possui apenas ${available} unidade(s) disponível(is). Ajuste a quantidade no carrinho.` }, { status: 409 });
       const unitPrice = Number(product.price);
-      items.push({ productId: requested.productId, name: String(product.name), quantity: requested.quantity, unitPrice, subtotal: unitPrice * requested.quantity });
+      const unitCost = product.cost_price == null ? null : Number(product.cost_price);
+      items.push({ productId: requested.productId, name: String(product.name), quantity: requested.quantity, unitPrice, subtotal: unitPrice * requested.quantity, unitCost, costSubtotal: unitCost == null ? null : unitCost * requested.quantity });
     }
 
     let customerId = await getAuthenticatedCustomerId();
