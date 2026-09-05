@@ -29,8 +29,10 @@ export async function POST(request: Request) {
     const name = String(data.get("name") || "").trim();
     const category = String(data.get("category") || "").trim();
     const price = Number(String(data.get("price") || "0").replace(",", "."));
+    const rawCost = String(data.get("costPrice") || "").trim();
+    const costPrice = rawCost ? Number(rawCost.replace(",", ".")) : null;
     const stockQuantity = Number.parseInt(String(data.get("stockQuantity") || "0"), 10);
-    if (!name || !productCategories.includes(category as any) || !Number.isFinite(price) || price < 0 || !Number.isInteger(stockQuantity) || stockQuantity < 0) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
+    if (!name || !productCategories.includes(category as any) || !Number.isFinite(price) || price < 0 || (costPrice !== null && (!Number.isFinite(costPrice) || costPrice < 0)) || !Number.isInteger(stockQuantity) || stockQuantity < 0) return NextResponse.json({ error: "Dados inválidos" }, { status: 400 });
 
     const files = uploadedFiles(data);
     if (files.length > 5) return NextResponse.json({ error: "Use no máximo 5 fotos por produto." }, { status: 400 });
@@ -43,7 +45,7 @@ export async function POST(request: Request) {
     const id = `${slugify(name)}-${Date.now()}`;
     const slug = `${slugify(name)}-${Date.now().toString().slice(-6)}`;
     const db = getDatabase();
-    await db.sql`INSERT INTO products (id, name, slug, category, price, description, specs, warranty, stock_status, stock_quantity, featured, badge, image, images) VALUES (${id}, ${name}, ${slug}, ${category}, ${price}, ${String(data.get("description") || "")}, ${JSON.stringify(specs)}::jsonb, ${String(data.get("warranty") || "") || null}, ${stockStatus}, ${stockQuantity}, ${data.get("featured") === "on"}, ${String(data.get("badge") || "") || null}, ${image}, ${JSON.stringify(images)}::jsonb)`;
+    await db.sql`INSERT INTO products (id, name, slug, category, price, cost_price, description, specs, warranty, stock_status, stock_quantity, featured, badge, image, images) VALUES (${id}, ${name}, ${slug}, ${category}, ${price}, ${costPrice}, ${String(data.get("description") || "")}, ${JSON.stringify(specs)}::jsonb, ${String(data.get("warranty") || "") || null}, ${stockStatus}, ${stockQuantity}, ${data.get("featured") === "on"}, ${String(data.get("badge") || "") || null}, ${image}, ${JSON.stringify(images)}::jsonb)`;
     return NextResponse.redirect(new URL("/admin?created=1", request.url), 303);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Não foi possível cadastrar o produto.";
