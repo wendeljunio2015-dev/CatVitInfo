@@ -18,15 +18,71 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const client = await db.pool.connect();
   try {
     await client.query("BEGIN");
-    const orderResult = await client.query("SELECT id, items, total, seller_id, seller_commission_rate, commission_amount, stock_deducted_at FROM orders WHERE id = $1 FOR UPDATE", [id]);
+    const orderResult = await client.query(
+      "SELECT id, items, total, seller_id, seller_commission_rate, commission_amount, stock_deducted_at, stock_restored_at FROM orders WHERE id = $1 FOR UPDATE",
+      [id],
+    );
     if (!orderResult.rows.length) {
       await client.query("ROLLBACK");
       return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
     }
 
-    const order = orderResult.rows[0] as { items: OrderItem[]; total: number; seller_id: string | null; seller_commission_rate: number | null; commission_amount: number | null; stock_deducted_at: string | null };
-    if (status === "concluido" && !order.stock_deducted_at) {
-      const items = Array.isArray(order.items) ? order.items : [];
+    const order = orderResult.rows[0] as {
+      items: OrderItem[];
+      total: number;
+      seller_id: string | null;
+      seller_commission_rate: number | null;
+      commission_amount: number | null;
+      stock_deducted_at: string | null;
+      stock_restored_at: string | null;
+    };
+    const items = Array.isArray(order.items) ? order.items : [];
+
+    if (status === "cancelado" && order.stock_deducted_at && !order.stock_restored_at) {
+      if (order.seller_id) {
+        const paid = await client.query(
+          `SELECT COALESCE(SUM(paid_amount), 0)::numeric AS paid
+           FROM commission_settlements
+           WHERE seller_id = $1
+             AND period_month = date_trunc('month', $2::timestamptz)::date`,
+          [order.seller_id, order.stock_deducted_at],
+        );
+        if (Number(paid.rows[0]?.paid || 0) > 0) {
+          throw new Error("Não é possível cancelar automaticamente: já existe pagamento de comissão para este vendedor no mês desta venda. Ajuste a comissão antes de cancelar.");
+        }
+      }
+
+      for (const item of items) {
+        const productId = String(item.productId || "");
+        const quantity = Math.max(1, Number(item.quantity) || 1);
+        const productResult = await client.query("SELECT id FROM products WHERE id = $1 FOR UPDATE", [productId]);
+        if (!productResult.rows.length) throw new Error(`Produto do pedido não encontrado: ${String(item.name || productId)}`);
+        await client.query(
+          `UPDATE products
+           SET stock_quantity = stock_quantity + $1,
+               stock_status = CASE
+                 WHEN stock_quantity + $1 <= 0 THEN 'indisponivel'
+                 WHEN stock_quantity + $1 <= 2 THEN 'ultimas_unidades'
+                 ELSE 'em_estoque'
+               END,
+               updated_at = NOW()
+           WHERE id = $2`,
+          [quantity, productId],
+        );
+      }
+
+      await client.query(
+        `UPDATE orders
+         SET status = 'cancelado',
+             stock_deducted_at = NULL,
+             stock_restored_at = NOW(),
+             commission_amount = NULL,
+             commission_reversed_at = NOW(),
+             updated_at = NOW()
+         WHERE id = $1`,
+        [id],
+      );
+    } else if (status === "concluido" && !order.stock_deducted_at) {
       for (const item of items) {
         const productId = String(item.productId || "");
         const quantity = Math.max(1, Number(item.quantity) || 1);
@@ -56,7 +112,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const commissionAmount = order.seller_id && order.seller_commission_rate !== null
         ? Math.round((Number(order.total) * Number(order.seller_commission_rate) / 100) * 100) / 100
         : null;
-      await client.query("UPDATE orders SET status = $1, stock_deducted_at = NOW(), commission_amount = $2, updated_at = NOW() WHERE id = $3", [status, commissionAmount, id]);
+      await client.query(
+        `UPDATE orders
+         SET status = 'concluido', stock_deducted_at = NOW(), stock_restored_at = NULL,
+             commission_amount = $1, commission_reversed_at = NULL, updated_at = NOW()
+         WHERE id = $2`,
+        [commissionAmount, id],
+      );
     } else {
       await client.query("UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2", [status, id]);
     }
