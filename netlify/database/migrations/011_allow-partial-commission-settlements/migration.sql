@@ -1,0 +1,5 @@
+ALTER TABLE commission_settlements
+DROP CONSTRAINT IF EXISTS commission_settlements_seller_id_period_month_key;
+
+CREATE INDEX IF NOT EXISTS idx_commission_settlements_seller_period
+ON commission_settlements(seller_id, period_month);
