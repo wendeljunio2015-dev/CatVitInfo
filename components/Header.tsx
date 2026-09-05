@@ -24,6 +24,7 @@ export default function Header() {
         <nav className="hidden items-center gap-6 text-sm font-semibold text-zinc-300 md:flex">
           <Link className="hover:text-white" href="/">Início</Link>
           <Link className="hover:text-white" href="/produtos">Produtos</Link>
+          <Link className="font-black text-blue-400 hover:text-blue-300" href="/monte-seu-pc">Monte seu PC</Link>
           <Link className="hover:text-white" href="/carrinho">Carrinho</Link>
         </nav>
 
@@ -39,6 +40,7 @@ export default function Header() {
           <div className="mx-auto grid max-w-7xl gap-2 text-sm font-bold">
             <Link onClick={close} href="/" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Início</Link>
             <Link onClick={close} href="/produtos" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Produtos</Link>
+            <Link onClick={close} href="/monte-seu-pc" className="rounded-xl bg-blue-600/10 px-4 py-3 text-blue-400 hover:bg-blue-600/20">Monte seu PC</Link>
             <Link onClick={close} href="/carrinho" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Carrinho ({itemCount})</Link>
             <a onClick={close} href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="rounded-xl bg-green-600 px-4 py-3 text-center hover:bg-green-500">Falar no WhatsApp</a>
           </div>
