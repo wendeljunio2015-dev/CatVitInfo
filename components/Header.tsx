@@ -7,7 +7,7 @@ import { useFavorites } from "@/context/FavoritesContext";
 
 function CartIcon() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
       <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 8H7" />
       <circle cx="10" cy="20" r="1" fill="currentColor" stroke="none" />
       <circle cx="18" cy="20" r="1" fill="currentColor" stroke="none" />
@@ -23,42 +23,46 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
-        <Link href="/" onClick={close} className="flex min-w-0 items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-xl font-black text-white shadow-lg shadow-blue-950/40">V</span>
-          <span className="min-w-0"><span className="block truncate text-base font-black text-white sm:text-xl">VITÓRIA <span className="text-blue-500">INFORMÁTICA</span></span><span className="block text-[11px] text-zinc-400 sm:text-xs">Goiânia • Goiás</span></span>
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-5">
+        <Link href="/" onClick={close} className="flex shrink-0 items-center gap-2.5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-lg font-black text-white shadow-lg shadow-blue-950/40">V</span>
+          <span className="whitespace-nowrap">
+            <span className="block text-sm font-black leading-tight text-white sm:text-lg">VITÓRIA <span className="text-blue-500">INFORMÁTICA</span></span>
+            <span className="block text-[10px] leading-tight text-zinc-400 sm:text-[11px]">Goiânia • Goiás</span>
+          </span>
         </Link>
 
-        <nav className="hidden items-center gap-4 text-sm font-semibold text-zinc-300 xl:flex">
+        <nav className="hidden items-center gap-3 text-xs font-semibold text-zinc-300 2xl:flex">
           <Link className="hover:text-white" href="/">Início</Link>
           <Link className="hover:text-white" href="/produtos">Produtos</Link>
           <Link className="font-bold text-red-400 hover:text-red-300" href="/promocoes">Promoções</Link>
           <Link className="font-black text-blue-400 hover:text-blue-300" href="/monte-seu-pc">Monte seu PC</Link>
           <Link className="hover:text-white" href="/favoritos">Favoritos ({favoriteCount})</Link>
-          <Link className="hover:text-white" href="/cliente/minha-conta">Minha conta</Link>
         </nav>
 
-        <div className="flex items-center gap-2">
-          <a href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="hidden rounded-xl bg-green-600 px-4 py-2 text-sm font-black text-white hover:bg-green-500 md:inline-block">WhatsApp</a>
-          <Link href="/cliente/login" className="hidden rounded-xl border border-zinc-700 px-3 py-2 text-sm font-bold hover:bg-zinc-800 lg:inline-block">Entrar</Link>
-          <Link href="/cliente/cadastro" className="hidden rounded-xl bg-blue-600 px-3 py-2 text-sm font-bold hover:bg-blue-500 xl:inline-block">Cadastro</Link>
-          <Link href="/carrinho" aria-label={`Carrinho com ${itemCount} item(ns)`} className="flex items-center gap-2 rounded-xl border border-zinc-700 px-3 py-2 text-sm font-bold hover:bg-zinc-800 sm:px-4"><CartIcon /><span className="hidden sm:inline">Carrinho</span><span className="text-blue-400">({itemCount})</span></Link>
-          <button type="button" onClick={() => setOpen((value) => !value)} aria-label="Abrir menu" aria-expanded={open} className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-700 text-xl xl:hidden">{open ? "×" : "☰"}</button>
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+          <Link href="/cliente/login" className="hidden rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-800 lg:inline-block">Entrar</Link>
+          <Link href="/cliente/cadastro" className="hidden rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-bold hover:bg-blue-500 xl:inline-block">Cadastro</Link>
+          <Link href="/carrinho" aria-label={`Carrinho com ${itemCount} item(ns)`} className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-800"><CartIcon /><span className="hidden md:inline">Carrinho</span><span className="text-blue-400">({itemCount})</span></Link>
+          <a href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="hidden rounded-lg bg-green-600 px-2.5 py-1.5 text-xs font-black text-white hover:bg-green-500 md:inline-block">WhatsApp</a>
+          <Link href="/cliente/minha-conta" className="hidden rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-800 lg:inline-block">Minha conta</Link>
+          <button type="button" onClick={() => setOpen((value) => !value)} aria-label="Abrir menu" aria-expanded={open} className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-700 text-lg 2xl:hidden">{open ? "×" : "☰"}</button>
         </div>
       </div>
 
       {open && (
-        <nav className="border-t border-zinc-800 bg-zinc-950 px-4 py-4 xl:hidden">
+        <nav className="border-t border-zinc-800 bg-zinc-950 px-4 py-4 2xl:hidden">
           <div className="mx-auto grid max-w-7xl gap-2 text-sm font-bold">
             <Link onClick={close} href="/" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Início</Link>
             <Link onClick={close} href="/produtos" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Produtos</Link>
             <Link onClick={close} href="/promocoes" className="rounded-xl bg-red-500/10 px-4 py-3 text-red-400 hover:bg-red-500/20">Promoções</Link>
             <Link onClick={close} href="/monte-seu-pc" className="rounded-xl bg-blue-600/10 px-4 py-3 text-blue-400 hover:bg-blue-600/20">Monte seu PC</Link>
             <Link onClick={close} href="/favoritos" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Favoritos ({favoriteCount})</Link>
+            <Link onClick={close} href="/carrinho" className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-3"><CartIcon />Carrinho ({itemCount})</Link>
             <Link onClick={close} href="/cliente/login" className="rounded-xl border border-zinc-700 px-4 py-3 text-center">Entrar</Link>
             <Link onClick={close} href="/cliente/cadastro" className="rounded-xl bg-blue-600 px-4 py-3 text-center">Criar cadastro</Link>
-            <Link onClick={close} href="/cliente/minha-conta" className="rounded-xl bg-zinc-900 px-4 py-3 text-center">Minha conta</Link>
             <a onClick={close} href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="rounded-xl bg-green-600 px-4 py-3 text-center hover:bg-green-500">Falar no WhatsApp</a>
+            <Link onClick={close} href="/cliente/minha-conta" className="rounded-xl bg-zinc-900 px-4 py-3 text-center">Minha conta</Link>
           </div>
         </nav>
       )}
