@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 
@@ -31,11 +31,26 @@ function WhatsAppIcon() {
   );
 }
 
+type CustomerSession = { authenticated: boolean; customer?: { id: string; name: string } };
+
 export default function Header() {
   const { itemCount } = useCart();
   const { count: favoriteCount } = useFavorites();
   const [open, setOpen] = useState(false);
+  const [session, setSession] = useState<CustomerSession | null>(null);
   const close = () => setOpen(false);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/customer/session", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data: CustomerSession) => { if (active) setSession(data); })
+      .catch(() => { if (active) setSession({ authenticated: false }); });
+    return () => { active = false; };
+  }, []);
+
+  const authenticated = session?.authenticated === true;
+  const guest = session?.authenticated === false;
 
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
@@ -57,11 +72,12 @@ export default function Header() {
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-          <Link href="/cliente/login" className="hidden rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-800 lg:inline-block">Entrar</Link>
-          <Link href="/cliente/cadastro" className="hidden rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-bold hover:bg-blue-500 xl:inline-block">Cadastro</Link>
+          {guest && <Link href="/cliente/login" className="hidden rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-800 lg:inline-block">Entrar</Link>}
+          {guest && <Link href="/cliente/cadastro" className="hidden rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-bold hover:bg-blue-500 xl:inline-block">Cadastro</Link>}
           <Link href="/carrinho" aria-label={`Carrinho com ${itemCount} item(ns)`} className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-800"><CartIcon /><span className="hidden md:inline">Carrinho</span><span className="text-blue-400">({itemCount})</span></Link>
           <a href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="hidden items-center gap-1.5 rounded-lg bg-green-600 px-2.5 py-1.5 text-xs font-black text-white hover:bg-green-500 md:flex"><WhatsAppIcon />WhatsApp</a>
-          <Link href="/cliente/minha-conta" className="hidden rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-800 lg:inline-block">Minha conta</Link>
+          {authenticated && <Link href="/cliente/minha-conta" className="hidden rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-800 lg:inline-block">Minha conta</Link>}
+          {authenticated && <form action="/api/customer/logout" method="post" className="hidden lg:block"><button className="rounded-lg border border-red-500/30 px-2.5 py-1.5 text-xs font-bold text-red-300 hover:bg-red-500/10">Sair</button></form>}
           <button type="button" onClick={() => setOpen((value) => !value)} aria-label="Abrir menu" aria-expanded={open} className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-700 text-lg 2xl:hidden">{open ? "×" : "☰"}</button>
         </div>
       </div>
@@ -74,10 +90,11 @@ export default function Header() {
             <Link onClick={close} href="/promocoes" className="rounded-xl bg-red-500/10 px-4 py-3 text-red-400 hover:bg-red-500/20">Promoções</Link>
             <Link onClick={close} href="/monte-seu-pc" className="rounded-xl bg-blue-600/10 px-4 py-3 text-blue-400 hover:bg-blue-600/20">Monte seu PC</Link>
             <Link onClick={close} href="/favoritos" className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 hover:bg-zinc-900"><HeartIcon />Favoritos ({favoriteCount})</Link>
-            <Link onClick={close} href="/cliente/login" className="rounded-xl border border-zinc-700 px-4 py-3 text-center">Entrar</Link>
-            <Link onClick={close} href="/cliente/cadastro" className="rounded-xl bg-blue-600 px-4 py-3 text-center">Criar cadastro</Link>
+            {guest && <Link onClick={close} href="/cliente/login" className="rounded-xl border border-zinc-700 px-4 py-3 text-center">Entrar</Link>}
+            {guest && <Link onClick={close} href="/cliente/cadastro" className="rounded-xl bg-blue-600 px-4 py-3 text-center">Criar cadastro</Link>}
             <a onClick={close} href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-3 text-center hover:bg-green-500"><WhatsAppIcon />Falar no WhatsApp</a>
-            <Link onClick={close} href="/cliente/minha-conta" className="rounded-xl bg-zinc-900 px-4 py-3 text-center">Minha conta</Link>
+            {authenticated && <Link onClick={close} href="/cliente/minha-conta" className="rounded-xl bg-zinc-900 px-4 py-3 text-center">Minha conta</Link>}
+            {authenticated && <form action="/api/customer/logout" method="post"><button className="w-full rounded-xl border border-red-500/30 px-4 py-3 text-red-300">Sair</button></form>}
           </div>
         </nav>
       )}
