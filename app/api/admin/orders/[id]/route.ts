@@ -18,13 +18,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const client = await db.pool.connect();
   try {
     await client.query("BEGIN");
-    const orderResult = await client.query("SELECT id, items, stock_deducted_at FROM orders WHERE id = $1 FOR UPDATE", [id]);
+    const orderResult = await client.query("SELECT id, items, total, seller_id, seller_commission_rate, commission_amount, stock_deducted_at FROM orders WHERE id = $1 FOR UPDATE", [id]);
     if (!orderResult.rows.length) {
       await client.query("ROLLBACK");
       return NextResponse.json({ error: "Pedido não encontrado" }, { status: 404 });
     }
 
-    const order = orderResult.rows[0] as { items: OrderItem[]; stock_deducted_at: string | null };
+    const order = orderResult.rows[0] as { items: OrderItem[]; total: number; seller_id: string | null; seller_commission_rate: number | null; commission_amount: number | null; stock_deducted_at: string | null };
     if (status === "concluido" && !order.stock_deducted_at) {
       const items = Array.isArray(order.items) ? order.items : [];
       for (const item of items) {
@@ -53,7 +53,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
         );
       }
 
-      await client.query("UPDATE orders SET status = $1, stock_deducted_at = NOW(), updated_at = NOW() WHERE id = $2", [status, id]);
+      const commissionAmount = order.seller_id && order.seller_commission_rate !== null
+        ? Math.round((Number(order.total) * Number(order.seller_commission_rate) / 100) * 100) / 100
+        : null;
+      await client.query("UPDATE orders SET status = $1, stock_deducted_at = NOW(), commission_amount = $2, updated_at = NOW() WHERE id = $3", [status, commissionAmount, id]);
     } else {
       await client.query("UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2", [status, id]);
     }
