@@ -9,9 +9,18 @@ const allowedTypes: Record<string, string> = {
   "image/webp": "webp",
 };
 
+function isProductionRuntime() {
+  const context = process.env.CONTEXT || process.env.NETLIFY_CONTEXT || "";
+  if (context === "production") return true;
+
+  const siteUrl = process.env.URL;
+  const deployUrl = process.env.DEPLOY_PRIME_URL;
+  return Boolean(siteUrl && deployUrl && siteUrl === deployUrl);
+}
+
 export function getProductImageStore() {
-  return process.env.CONTEXT === "production"
-    ? getStore(STORE_NAME)
+  return isProductionRuntime()
+    ? getStore(STORE_NAME, { consistency: "strong" })
     : getDeployStore(STORE_NAME);
 }
 
