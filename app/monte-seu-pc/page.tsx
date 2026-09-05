@@ -46,7 +46,7 @@ export default function MonteSeuPcPage() {
   const whatsappHref = useMemo(() => {
     const lines = selectedItems.length ? selectedItems.map((product) => `• ${product.name} - ${money.format(product.price)}`).join("\n") : "Ainda não selecionei os componentes.";
     const message = `Olá! Montei uma configuração no catálogo da Vitória Informática:\n\n${lines}\n\nTotal estimado: ${money.format(total)}\n\nGostaria de confirmar disponibilidade, compatibilidade, garantia e orçamento final.`;
-    return `https://wa.me/5562994780830?text=${encodeURIComponent(message)}`;
+    return `/whatsapp?text=${encodeURIComponent(message)}`;
   }, [selectedItems, total]);
 
   return (
