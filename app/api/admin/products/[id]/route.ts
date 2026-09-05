@@ -4,6 +4,13 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { saveProductImage } from "@/lib/product-images";
 import { productCategories } from "@/data/categories";
 
+function parseSpecs(value: FormDataEntryValue | null) {
+  return String(value || "")
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminAuthenticated())) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
 
@@ -38,11 +45,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     const uploadedImages = await Promise.all(newFiles.map(saveProductImage));
-    const images = [...keptImages, ...uploadedImages].slice(0, 5);
+    let images = [...keptImages, ...uploadedImages].slice(0, 5);
+    const requestedPrimary = String(data.get("primaryImage") || "");
+    if (requestedPrimary && images.includes(requestedPrimary)) {
+      images = [requestedPrimary, ...images.filter((url) => url !== requestedPrimary)];
+    }
+
     const image = images[0] || null;
     const badge = String(data.get("badge") || "") || null;
     const warranty = String(data.get("warranty") || "").trim() || null;
     const stockStatus = String(data.get("stockStatus") || "em_estoque");
+    const specs = parseSpecs(data.get("specs"));
 
     if (!["em_estoque", "ultimas_unidades", "indisponivel"].includes(stockStatus)) {
       return NextResponse.json({ error: "Status de estoque inválido" }, { status: 400 });
@@ -57,6 +70,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
           category = ${category},
           price = ${price},
           description = ${String(data.get("description") || "")},
+          specs = ${JSON.stringify(specs)}::jsonb,
           warranty = ${warranty},
           stock_status = ${stockStatus},
           featured = ${data.get("featured") === "on"},
