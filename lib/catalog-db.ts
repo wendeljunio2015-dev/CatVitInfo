@@ -23,22 +23,33 @@ function mapProduct(row: any): Product {
   };
 }
 
-const fields = "id, name, slug, category, price, description, specs, warranty, stock_status, featured, badge, image, images";
-
 export async function getCatalogProducts(): Promise<Product[]> {
   const db = getDatabase();
-  const rows = await db.sql.unsafe(`SELECT ${fields} FROM products ORDER BY created_at DESC`);
+  const rows = await db.sql`
+    SELECT id, name, slug, category, price, description, specs, warranty, stock_status, featured, badge, image,
+           to_jsonb(products)->'images' AS images
+    FROM products
+    ORDER BY created_at DESC
+  `;
   return rows.map(mapProduct);
 }
 
 export async function getCatalogProductBySlug(slug: string): Promise<Product | null> {
   const db = getDatabase();
-  const rows = await db.sql`SELECT id, name, slug, category, price, description, specs, warranty, stock_status, featured, badge, image, images FROM products WHERE slug = ${slug} LIMIT 1`;
+  const rows = await db.sql`
+    SELECT id, name, slug, category, price, description, specs, warranty, stock_status, featured, badge, image,
+           to_jsonb(products)->'images' AS images
+    FROM products WHERE slug = ${slug} LIMIT 1
+  `;
   return rows.length ? mapProduct(rows[0]) : null;
 }
 
 export async function getCatalogProductById(id: string): Promise<Product | null> {
   const db = getDatabase();
-  const rows = await db.sql`SELECT id, name, slug, category, price, description, specs, warranty, stock_status, featured, badge, image, images FROM products WHERE id = ${id} LIMIT 1`;
+  const rows = await db.sql`
+    SELECT id, name, slug, category, price, description, specs, warranty, stock_status, featured, badge, image,
+           to_jsonb(products)->'images' AS images
+    FROM products WHERE id = ${id} LIMIT 1
+  `;
   return rows.length ? mapProduct(rows[0]) : null;
 }
