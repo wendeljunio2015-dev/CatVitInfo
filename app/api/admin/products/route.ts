@@ -34,6 +34,28 @@ export async function POST(request: Request) {
   }
 }
 
+export async function PATCH(request: Request) {
+  if (!(await isAdminAuthenticated())) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+
+  try {
+    const data = await request.formData();
+    const id = String(data.get("id") || "").trim();
+    const imageFile = data.get("imageFile");
+    if (!id) return NextResponse.json({ error: "ID obrigatório" }, { status: 400 });
+    if (!(imageFile instanceof File) || imageFile.size === 0) return NextResponse.json({ error: "Selecione uma imagem" }, { status: 400 });
+
+    const image = await saveProductImage(imageFile);
+    const db = getDatabase();
+    const rows = await db.sql`UPDATE products SET image = ${image}, updated_at = NOW() WHERE id = ${id} RETURNING id`;
+    if (!rows.length) return NextResponse.json({ error: "Produto não encontrado" }, { status: 404 });
+
+    return NextResponse.json({ ok: true, image });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Não foi possível atualizar a foto.";
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+}
+
 export async function DELETE(request: Request) {
   if (!(await isAdminAuthenticated())) return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
   const { id } = await request.json();
