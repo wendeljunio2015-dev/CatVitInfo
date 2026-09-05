@@ -13,6 +13,12 @@ const stockLabel = {
   indisponivel: "Indisponível",
 };
 
+const badgeStyle = {
+  Novo: "bg-emerald-500/15 text-emerald-400",
+  Promoção: "bg-red-500/15 text-red-400",
+  Destaque: "bg-blue-600/20 text-blue-400",
+};
+
 export default function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -35,7 +41,7 @@ export default function ProductCard({ product }: { product: Product }) {
       <div className="flex flex-1 flex-col">
         <div className="flex flex-wrap gap-2">
           <span className="rounded-full bg-zinc-800 px-3 py-1 text-xs text-zinc-300">{product.category}</span>
-          {product.badge && <span className="rounded-full bg-blue-600/20 px-3 py-1 text-xs font-bold text-blue-400">{product.badge}</span>}
+          {product.badge && <span className={`rounded-full px-3 py-1 text-xs font-bold ${badgeStyle[product.badge]}`}>{product.badge}</span>}
         </div>
         <Link href={`/produto/${product.slug}`} className="mt-4 text-xl font-bold hover:text-blue-400">{product.name}</Link>
         <p className="mt-2 text-sm leading-6 text-zinc-400">{product.description}</p>
