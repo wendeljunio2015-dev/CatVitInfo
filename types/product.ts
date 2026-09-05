@@ -10,6 +10,7 @@ export interface Product {
   specs?: string[];
   warranty?: string;
   stockStatus: StockStatus;
+  stockQuantity?: number;
   featured?: boolean;
   badge?: "Novo" | "Promoção" | "Destaque";
   image?: string;
