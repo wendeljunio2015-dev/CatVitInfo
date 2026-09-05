@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ProductActions from "@/components/ProductActions";
+import ProductGallery from "@/components/ProductGallery";
 import { getCatalogProductBySlug } from "@/lib/catalog-db";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -19,21 +20,14 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   if (!product) notFound();
 
+  const images = product.images ?? (product.image ? [product.image] : []);
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-16">
       <Link href="/produtos" className="text-sm font-semibold text-blue-400 hover:text-blue-300">← Voltar ao catálogo</Link>
 
       <div className="mt-8 grid gap-10 lg:grid-cols-2">
-        <div className="flex aspect-square items-center justify-center overflow-hidden rounded-3xl border border-zinc-800 bg-zinc-950">
-          {product.image ? (
-            <img src={product.image} alt={product.name} className="h-full w-full object-contain p-6" />
-          ) : (
-            <div className="text-center">
-              <div className="text-8xl">🖥️</div>
-              <p className="mt-4 text-sm text-zinc-500">Imagem do produto será adicionada em breve</p>
-            </div>
-          )}
-        </div>
+        <ProductGallery name={product.name} images={images} />
 
         <section>
           <div className="flex flex-wrap gap-2">
