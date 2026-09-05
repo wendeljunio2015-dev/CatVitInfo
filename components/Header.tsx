@@ -15,6 +15,22 @@ function CartIcon() {
   );
 }
 
+function HeartIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" />
+    </svg>
+  );
+}
+
+function WhatsAppIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
+      <path d="M12 2a9.8 9.8 0 0 0-8.4 14.9L2 22l5.3-1.5A9.9 9.9 0 1 0 12 2Zm0 17.9c-1.5 0-3-.4-4.3-1.2l-.3-.2-3.1.9.9-3-.2-.3A7.9 7.9 0 1 1 12 19.9Zm4.3-5.9c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.6.1-.2.2-.6.8-.8 1-.1.2-.3.2-.5.1-1.4-.7-2.4-1.3-3.3-2.9-.2-.3.2-.3.7-1.1.1-.2.1-.4 0-.6 0-.2-.6-1.5-.9-2-.2-.5-.5-.5-.7-.5h-.6c-.2 0-.6.1-.9.4-.3.3-1.2 1.2-1.2 2.9s1.2 3.3 1.4 3.5c.2.2 2.4 3.7 5.9 5.2 2.2.9 3.1 1 4.2.8.7-.1 2.1-.9 2.4-1.7.3-.8.3-1.5.2-1.7-.1-.2-.3-.2-.6-.3Z" />
+    </svg>
+  );
+}
+
 export default function Header() {
   const { itemCount } = useCart();
   const { count: favoriteCount } = useFavorites();
@@ -37,14 +53,14 @@ export default function Header() {
           <Link className="hover:text-white" href="/produtos">Produtos</Link>
           <Link className="font-bold text-red-400 hover:text-red-300" href="/promocoes">Promoções</Link>
           <Link className="font-black text-blue-400 hover:text-blue-300" href="/monte-seu-pc">Monte seu PC</Link>
-          <Link className="hover:text-white" href="/favoritos">Favoritos ({favoriteCount})</Link>
+          <Link className="flex items-center gap-1 hover:text-white" href="/favoritos"><HeartIcon />Favoritos ({favoriteCount})</Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <Link href="/cliente/login" className="hidden rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-800 lg:inline-block">Entrar</Link>
           <Link href="/cliente/cadastro" className="hidden rounded-lg bg-blue-600 px-2.5 py-1.5 text-xs font-bold hover:bg-blue-500 xl:inline-block">Cadastro</Link>
           <Link href="/carrinho" aria-label={`Carrinho com ${itemCount} item(ns)`} className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-800"><CartIcon /><span className="hidden md:inline">Carrinho</span><span className="text-blue-400">({itemCount})</span></Link>
-          <a href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="hidden rounded-lg bg-green-600 px-2.5 py-1.5 text-xs font-black text-white hover:bg-green-500 md:inline-block">WhatsApp</a>
+          <a href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="hidden items-center gap-1.5 rounded-lg bg-green-600 px-2.5 py-1.5 text-xs font-black text-white hover:bg-green-500 md:flex"><WhatsAppIcon />WhatsApp</a>
           <Link href="/cliente/minha-conta" className="hidden rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs font-bold hover:bg-zinc-800 lg:inline-block">Minha conta</Link>
           <button type="button" onClick={() => setOpen((value) => !value)} aria-label="Abrir menu" aria-expanded={open} className="flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-700 text-lg 2xl:hidden">{open ? "×" : "☰"}</button>
         </div>
@@ -57,11 +73,10 @@ export default function Header() {
             <Link onClick={close} href="/produtos" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Produtos</Link>
             <Link onClick={close} href="/promocoes" className="rounded-xl bg-red-500/10 px-4 py-3 text-red-400 hover:bg-red-500/20">Promoções</Link>
             <Link onClick={close} href="/monte-seu-pc" className="rounded-xl bg-blue-600/10 px-4 py-3 text-blue-400 hover:bg-blue-600/20">Monte seu PC</Link>
-            <Link onClick={close} href="/favoritos" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Favoritos ({favoriteCount})</Link>
-            <Link onClick={close} href="/carrinho" className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 px-4 py-3"><CartIcon />Carrinho ({itemCount})</Link>
+            <Link onClick={close} href="/favoritos" className="flex items-center justify-center gap-2 rounded-xl px-4 py-3 hover:bg-zinc-900"><HeartIcon />Favoritos ({favoriteCount})</Link>
             <Link onClick={close} href="/cliente/login" className="rounded-xl border border-zinc-700 px-4 py-3 text-center">Entrar</Link>
             <Link onClick={close} href="/cliente/cadastro" className="rounded-xl bg-blue-600 px-4 py-3 text-center">Criar cadastro</Link>
-            <a onClick={close} href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="rounded-xl bg-green-600 px-4 py-3 text-center hover:bg-green-500">Falar no WhatsApp</a>
+            <a onClick={close} href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 rounded-xl bg-green-600 px-4 py-3 text-center hover:bg-green-500"><WhatsAppIcon />Falar no WhatsApp</a>
             <Link onClick={close} href="/cliente/minha-conta" className="rounded-xl bg-zinc-900 px-4 py-3 text-center">Minha conta</Link>
           </div>
         </nav>
