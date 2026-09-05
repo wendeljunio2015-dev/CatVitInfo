@@ -23,9 +23,10 @@ export default function Header() {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-5 text-sm font-semibold text-zinc-300 md:flex">
+        <nav className="hidden items-center gap-4 text-sm font-semibold text-zinc-300 md:flex">
           <Link className="hover:text-white" href="/">Início</Link>
           <Link className="hover:text-white" href="/produtos">Produtos</Link>
+          <Link className="font-bold text-red-400 hover:text-red-300" href="/promocoes">Promoções</Link>
           <Link className="font-black text-blue-400 hover:text-blue-300" href="/monte-seu-pc">Monte seu PC</Link>
           <Link className="hover:text-white" href="/favoritos">Favoritos ({favoriteCount})</Link>
           <Link className="hover:text-white" href="/carrinho">Carrinho</Link>
@@ -44,6 +45,7 @@ export default function Header() {
           <div className="mx-auto grid max-w-7xl gap-2 text-sm font-bold">
             <Link onClick={close} href="/" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Início</Link>
             <Link onClick={close} href="/produtos" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Produtos</Link>
+            <Link onClick={close} href="/promocoes" className="rounded-xl bg-red-500/10 px-4 py-3 text-red-400 hover:bg-red-500/20">Promoções</Link>
             <Link onClick={close} href="/monte-seu-pc" className="rounded-xl bg-blue-600/10 px-4 py-3 text-blue-400 hover:bg-blue-600/20">Monte seu PC</Link>
             <Link onClick={close} href="/favoritos" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Favoritos ({favoriteCount})</Link>
             <Link onClick={close} href="/carrinho" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Carrinho ({itemCount})</Link>
