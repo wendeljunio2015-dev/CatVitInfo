@@ -19,7 +19,7 @@ export default function Header() {
           <span className="min-w-0"><span className="block truncate text-base font-black text-white sm:text-xl">VITÓRIA <span className="text-blue-500">INFORMÁTICA</span></span><span className="block text-[11px] text-zinc-400 sm:text-xs">Goiânia • Goiás</span></span>
         </Link>
 
-        <nav className="hidden items-center gap-4 text-sm font-semibold text-zinc-300 lg:flex">
+        <nav className="hidden items-center gap-4 text-sm font-semibold text-zinc-300 xl:flex">
           <Link className="hover:text-white" href="/">Início</Link>
           <Link className="hover:text-white" href="/produtos">Produtos</Link>
           <Link className="font-bold text-red-400 hover:text-red-300" href="/promocoes">Promoções</Link>
@@ -30,15 +30,16 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/cliente/login" className="hidden rounded-xl border border-zinc-700 px-3 py-2 text-sm font-bold hover:bg-zinc-800 sm:inline-block">Entrar</Link>
-          <Link href="/cliente/cadastro" className="hidden rounded-xl bg-blue-600 px-3 py-2 text-sm font-bold hover:bg-blue-500 md:inline-block">Cadastro</Link>
+          <a href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="hidden rounded-xl bg-green-600 px-4 py-2 text-sm font-black text-white hover:bg-green-500 md:inline-block">WhatsApp</a>
+          <Link href="/cliente/login" className="hidden rounded-xl border border-zinc-700 px-3 py-2 text-sm font-bold hover:bg-zinc-800 lg:inline-block">Entrar</Link>
+          <Link href="/cliente/cadastro" className="hidden rounded-xl bg-blue-600 px-3 py-2 text-sm font-bold hover:bg-blue-500 xl:inline-block">Cadastro</Link>
           <Link href="/carrinho" className="rounded-xl border border-zinc-700 px-3 py-2 text-sm font-bold hover:bg-zinc-800 sm:px-4">Carrinho <span className="text-blue-400">({itemCount})</span></Link>
-          <button type="button" onClick={() => setOpen((value) => !value)} aria-label="Abrir menu" aria-expanded={open} className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-700 text-xl lg:hidden">{open ? "×" : "☰"}</button>
+          <button type="button" onClick={() => setOpen((value) => !value)} aria-label="Abrir menu" aria-expanded={open} className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-700 text-xl xl:hidden">{open ? "×" : "☰"}</button>
         </div>
       </div>
 
       {open && (
-        <nav className="border-t border-zinc-800 bg-zinc-950 px-4 py-4 lg:hidden">
+        <nav className="border-t border-zinc-800 bg-zinc-950 px-4 py-4 xl:hidden">
           <div className="mx-auto grid max-w-7xl gap-2 text-sm font-bold">
             <Link onClick={close} href="/" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Início</Link>
             <Link onClick={close} href="/produtos" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Produtos</Link>
