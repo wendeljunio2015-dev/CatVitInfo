@@ -44,9 +44,8 @@ export async function POST(request: Request) {
        FROM orders
        WHERE seller_id=$1
          AND status='concluido'
-         AND stock_deducted_at IS NOT NULL
-         AND created_at >= $2::date
-         AND created_at < ($2::date + INTERVAL '1 month')`,
+         AND stock_deducted_at >= $2::date
+         AND stock_deducted_at < ($2::date + INTERVAL '1 month')`,
       [sellerId, periodMonth],
     );
     const row = totals.rows[0];
