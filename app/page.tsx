@@ -4,6 +4,7 @@ import { products } from "@/data/products";
 
 export default function Home() {
   const featured = products.filter((product) => product.featured);
+  const promotions = products.filter((product) => product.badge === "Promoção");
 
   return (
     <main>
@@ -15,6 +16,7 @@ export default function Home() {
           <p className="mt-6 max-w-2xl text-base leading-7 text-zinc-300 md:text-lg">Encontre processadores, kits upgrade, placas-mãe, SSDs, memórias e outros componentes disponíveis na Vitória Informática.</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href="/produtos" className="rounded-xl bg-blue-600 px-6 py-3 font-bold hover:bg-blue-500">Explorar catálogo</Link>
+            <Link href="/promocoes" className="rounded-xl border border-red-500/30 bg-red-500/10 px-6 py-3 font-bold text-red-300 hover:bg-red-500/20">Promoções e destaques</Link>
             <a href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="rounded-xl border border-zinc-700 bg-zinc-950/40 px-6 py-3 font-bold hover:bg-zinc-800">Falar no WhatsApp</a>
           </div>
           <div className="mt-10 flex flex-wrap gap-x-8 gap-y-3 text-sm text-zinc-400">
@@ -22,6 +24,18 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {promotions.length > 0 && (
+        <section className="border-b border-zinc-800 bg-red-950/10">
+          <div className="mx-auto max-w-7xl px-6 py-14">
+            <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+              <div><p className="text-sm font-black uppercase tracking-widest text-red-400">Promoções ativas</p><h2 className="mt-2 text-3xl font-black">Ofertas do momento</h2></div>
+              <Link href="/promocoes" className="font-bold text-red-400 hover:text-red-300">Ver todas →</Link>
+            </div>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">{promotions.slice(0, 3).map((product) => <ProductCard key={product.id} product={product} />)}</div>
+          </div>
+        </section>
+      )}
 
       <section className="mx-auto max-w-7xl px-6 py-16">
         <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
