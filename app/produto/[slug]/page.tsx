@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import ProductActions from "@/components/ProductActions";
-import { products } from "@/data/products";
+import { getCatalogProductBySlug } from "@/lib/catalog-db";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -11,13 +11,11 @@ const stockLabel = {
   indisponivel: "Indisponível",
 };
 
-export function generateStaticParams() {
-  return products.map((product) => ({ slug: product.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = products.find((item) => item.slug === slug);
+  const product = await getCatalogProductBySlug(slug);
 
   if (!product) notFound();
 
@@ -62,9 +60,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             </div>
           ) : null}
 
-          <div className="mt-8">
-            <ProductActions product={product} />
-          </div>
+          <div className="mt-8"><ProductActions product={product} /></div>
         </section>
       </div>
     </main>
