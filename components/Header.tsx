@@ -5,6 +5,16 @@ import { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { useFavorites } from "@/context/FavoritesContext";
 
+function CartIcon() {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 8H7" />
+      <circle cx="10" cy="20" r="1" fill="currentColor" stroke="none" />
+      <circle cx="18" cy="20" r="1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export default function Header() {
   const { itemCount } = useCart();
   const { count: favoriteCount } = useFavorites();
@@ -25,7 +35,6 @@ export default function Header() {
           <Link className="font-bold text-red-400 hover:text-red-300" href="/promocoes">Promoções</Link>
           <Link className="font-black text-blue-400 hover:text-blue-300" href="/monte-seu-pc">Monte seu PC</Link>
           <Link className="hover:text-white" href="/favoritos">Favoritos ({favoriteCount})</Link>
-          <Link className="hover:text-white" href="/carrinho">Carrinho</Link>
           <Link className="hover:text-white" href="/cliente/minha-conta">Minha conta</Link>
         </nav>
 
@@ -33,7 +42,7 @@ export default function Header() {
           <a href="https://wa.me/5562994780830" target="_blank" rel="noopener noreferrer" className="hidden rounded-xl bg-green-600 px-4 py-2 text-sm font-black text-white hover:bg-green-500 md:inline-block">WhatsApp</a>
           <Link href="/cliente/login" className="hidden rounded-xl border border-zinc-700 px-3 py-2 text-sm font-bold hover:bg-zinc-800 lg:inline-block">Entrar</Link>
           <Link href="/cliente/cadastro" className="hidden rounded-xl bg-blue-600 px-3 py-2 text-sm font-bold hover:bg-blue-500 xl:inline-block">Cadastro</Link>
-          <Link href="/carrinho" className="rounded-xl border border-zinc-700 px-3 py-2 text-sm font-bold hover:bg-zinc-800 sm:px-4">Carrinho <span className="text-blue-400">({itemCount})</span></Link>
+          <Link href="/carrinho" aria-label={`Carrinho com ${itemCount} item(ns)`} className="flex items-center gap-2 rounded-xl border border-zinc-700 px-3 py-2 text-sm font-bold hover:bg-zinc-800 sm:px-4"><CartIcon /><span className="hidden sm:inline">Carrinho</span><span className="text-blue-400">({itemCount})</span></Link>
           <button type="button" onClick={() => setOpen((value) => !value)} aria-label="Abrir menu" aria-expanded={open} className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-700 text-xl xl:hidden">{open ? "×" : "☰"}</button>
         </div>
       </div>
@@ -46,7 +55,6 @@ export default function Header() {
             <Link onClick={close} href="/promocoes" className="rounded-xl bg-red-500/10 px-4 py-3 text-red-400 hover:bg-red-500/20">Promoções</Link>
             <Link onClick={close} href="/monte-seu-pc" className="rounded-xl bg-blue-600/10 px-4 py-3 text-blue-400 hover:bg-blue-600/20">Monte seu PC</Link>
             <Link onClick={close} href="/favoritos" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Favoritos ({favoriteCount})</Link>
-            <Link onClick={close} href="/carrinho" className="rounded-xl px-4 py-3 hover:bg-zinc-900">Carrinho ({itemCount})</Link>
             <Link onClick={close} href="/cliente/login" className="rounded-xl border border-zinc-700 px-4 py-3 text-center">Entrar</Link>
             <Link onClick={close} href="/cliente/cadastro" className="rounded-xl bg-blue-600 px-4 py-3 text-center">Criar cadastro</Link>
             <Link onClick={close} href="/cliente/minha-conta" className="rounded-xl bg-zinc-900 px-4 py-3 text-center">Minha conta</Link>
