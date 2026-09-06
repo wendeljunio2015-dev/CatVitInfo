@@ -13,8 +13,9 @@ export default function CartPage() {
   const [customerEmail, setCustomerEmail] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
-  const checkout = async () => {
+  const submitQuote = async () => {
     if (!items.length || sending) return;
     setSending(true);
     setError("");
@@ -40,11 +41,15 @@ export default function CartPage() {
     }
   };
 
+  const handleClearCart = () => {
+    if (window.confirm("Deseja realmente remover todos os produtos do carrinho?")) clearCart();
+  };
+
   if (!items.length) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-16 text-center">
         <h1 className="text-4xl font-black">Seu carrinho está vazio</h1>
-        <p className="mt-4 text-zinc-400">Adicione produtos para montar seu orçamento.</p>
+        <p className="mt-4 text-zinc-400">Adicione produtos para montar seu pedido ou solicitar um orçamento.</p>
         <Link href="/produtos" className="mt-8 inline-block rounded-xl bg-blue-600 px-6 py-3 font-bold hover:bg-blue-500">Ver produtos</Link>
       </main>
     );
@@ -53,8 +58,14 @@ export default function CartPage() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div><p className="text-sm font-bold uppercase tracking-widest text-blue-400">Orçamento</p><h1 className="mt-2 text-4xl font-black">Carrinho</h1></div>
-        <button onClick={clearCart} className="rounded-xl border border-zinc-700 px-4 py-2 text-sm font-bold hover:bg-zinc-800">Limpar carrinho</button>
+        <div>
+          <p className="text-sm font-bold uppercase tracking-widest text-blue-400">Seu pedido</p>
+          <h1 className="mt-2 text-4xl font-black">Carrinho <span className="text-xl font-bold text-zinc-500">• {itemCount} {itemCount === 1 ? "item" : "itens"}</span></h1>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/produtos" className="rounded-xl border border-blue-500/30 px-4 py-2 text-sm font-bold text-blue-300 hover:bg-blue-500/10">Continuar comprando</Link>
+          <button onClick={handleClearCart} className="rounded-xl border border-zinc-700 px-4 py-2 text-sm font-bold hover:bg-zinc-800">Limpar carrinho</button>
+        </div>
       </div>
       <div className="space-y-4">{items.map(({ product, quantity }) => {
         const stock = Math.max(0, Number(product.stockQuantity ?? 0));
@@ -68,7 +79,7 @@ export default function CartPage() {
           <div><label className="text-sm font-bold text-zinc-300">WhatsApp</label><input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} inputMode="tel" placeholder="(62) 99999-9999" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3" /></div>
           <div className="md:col-span-2"><label className="text-sm font-bold text-zinc-300">E-mail (opcional)</label><input value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} type="email" placeholder="cliente@email.com" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3" /></div>
         </div>
-        <p className="mt-4 text-sm leading-6 text-zinc-400">Ao informar nome e WhatsApp, seus dados serão vinculados ao orçamento para facilitar futuros atendimentos. O estoque é validado novamente antes de registrar o orçamento.</p>
+        <p className="mt-4 text-sm leading-6 text-zinc-400">Ao escolher <strong className="text-zinc-300">Somente orçamento</strong>, nome e WhatsApp serão vinculados ao atendimento. O estoque será validado novamente antes de registrar o orçamento.</p>
         {error ? <p className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm font-bold text-red-300">{error}</p> : null}
         <div className="mt-6">
           <p className="text-xs font-black uppercase tracking-widest text-zinc-500">Como deseja continuar?</p>
@@ -77,7 +88,7 @@ export default function CartPage() {
               <span className="flex items-center justify-between gap-3"><span className="font-black text-white">Pagar pelo Mercado Pago</span><span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-blue-300">Em breve</span></span>
               <span className="mt-1 block text-sm leading-6 text-zinc-400">Pix ou cartão. Checkout online em preparação.</span>
             </button>
-            <button type="button" onClick={checkout} disabled={sending} className="rounded-xl border border-green-500/30 bg-green-500/10 px-5 py-4 text-left hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-60">
+            <button type="button" onClick={submitQuote} disabled={sending} className="rounded-xl border border-green-500/30 bg-green-500/10 px-5 py-4 text-left hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-60">
               <span className="block font-black text-white">{sending ? "Registrando orçamento..." : "Somente orçamento"}</span>
               <span className="mt-1 block text-sm leading-6 text-zinc-300">Enviar o carrinho pelo WhatsApp para confirmar disponibilidade, condições e orçamento final.</span>
             </button>
