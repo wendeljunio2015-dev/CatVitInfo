@@ -46,9 +46,11 @@ export async function GET(request: Request) {
 
     const db = getDatabase();
     const rows = await db.sql`
-      SELECT o.id,o.order_number,o.customer_name,o.customer_phone,o.items,o.total,o.seller_name,
+      SELECT o.id,o.order_number,o.customer_name,o.items,o.total,o.seller_name,
+             c.phone AS customer_phone,
              COALESCE(s.phone,'5562994780830') AS seller_phone
       FROM orders o
+      LEFT JOIN customers c ON c.id=o.customer_id
       LEFT JOIN sellers s ON s.id=o.seller_id
       WHERE o.id=${orderId}
       LIMIT 1`;
