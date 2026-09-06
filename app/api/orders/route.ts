@@ -19,12 +19,16 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const requestedItems = Array.isArray(body.items) ? (body.items as RequestedItem[]) : [];
+    const channel = body.channel === "mercado_pago" ? "mercado_pago" : "whatsapp";
     let customerName = String(body.customerName || "").trim().slice(0, 120) || null;
     let customerPhone = normalizePhone(String(body.customerPhone || "")) || null;
     let customerEmail = String(body.customerEmail || "").trim().toLowerCase().slice(0, 180) || null;
 
     const normalized = requestedItems.map((item) => ({ productId: String(item.productId || "").trim(), quantity: Math.max(1, Math.min(99, Number(item.quantity) || 1)) })).filter((item) => item.productId);
     if (!normalized.length) return NextResponse.json({ error: "Carrinho vazio" }, { status: 400 });
+    if (channel === "mercado_pago" && (!customerName || !customerPhone || !customerEmail)) {
+      return NextResponse.json({ error: "Para pagar online, informe nome, WhatsApp e e-mail." }, { status: 400 });
+    }
 
     const db = getDatabase();
     const ids = normalized.map((item) => item.productId);
@@ -82,14 +86,15 @@ export async function POST(request: Request) {
     const total = items.reduce((sum, item) => sum + item.subtotal, 0);
     const id = crypto.randomUUID();
     const orderNumber = makeOrderNumber();
-    await db.sql`INSERT INTO orders (id,order_number,customer_id,customer_name,items,total,status,source,seller_id,seller_name,seller_commission_rate) VALUES (${id},${orderNumber},${customerId},${customerName},${JSON.stringify(items)}::jsonb,${total},'novo','whatsapp',${sellerId},${sellerName},${sellerCommissionRate})`;
+    const initialStatus = channel === "mercado_pago" ? "aguardando_pagamento" : "novo";
+    await db.sql`INSERT INTO orders (id,order_number,customer_id,customer_name,items,total,status,source,seller_id,seller_name,seller_commission_rate) VALUES (${id},${orderNumber},${customerId},${customerName},${JSON.stringify(items)}::jsonb,${total},${initialStatus},${channel},${sellerId},${sellerName},${sellerCommissionRate})`;
 
     const money = new Intl.NumberFormat("pt-BR", { style:"currency", currency:"BRL" });
     const lines = [`Olá! Gostaria de solicitar o orçamento ${orderNumber} na Vitória Informática:`, sellerName ? `Atendimento: ${sellerName}` : "", customerName ? `Cliente: ${customerName}` : "", customerPhone ? `WhatsApp: ${customerPhone}` : "", "", ...items.map((item) => `• ${item.quantity}x ${item.name} — ${money.format(item.subtotal)}`), "", `Total estimado: ${money.format(total)}`, "", "Por favor, confirme disponibilidade, garantia e condições de retirada/entrega em Goiânia."].filter(Boolean);
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
-    return NextResponse.json({ ok:true, orderNumber, total, customerId, sellerId, whatsappUrl });
+    return NextResponse.json({ ok:true, id, orderNumber, total, customerId, sellerId, channel, whatsappUrl });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Não foi possível registrar o orçamento.";
+    const message = error instanceof Error ? error.message : "Não foi possível registrar o pedido.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
