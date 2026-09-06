@@ -7,6 +7,8 @@ import MercadoPagoCheckout from "@/components/MercadoPagoCheckout";
 
 const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
+type ApprovedPayment = { orderNumber: string; whatsappUrl: string };
+
 export default function CartPage() {
   const { items, total, updateQuantity, removeItem, clearCart } = useCart();
   const [customerName, setCustomerName] = useState("");
@@ -15,7 +17,7 @@ export default function CartPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentCompleted, setPaymentCompleted] = useState(false);
+  const [approvedPayment, setApprovedPayment] = useState<ApprovedPayment | null>(null);
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const submitQuote = async () => {
@@ -52,9 +54,9 @@ export default function CartPage() {
     setShowPayment(true);
   };
 
-  const handlePaymentApproved = useCallback(() => {
+  const handlePaymentApproved = useCallback((result: ApprovedPayment) => {
     clearCart();
-    setPaymentCompleted(true);
+    setApprovedPayment(result);
     setShowPayment(false);
   }, [clearCart]);
 
@@ -62,14 +64,18 @@ export default function CartPage() {
     if (window.confirm("Deseja realmente remover todos os produtos do carrinho?")) clearCart();
   };
 
-  if (paymentCompleted) {
+  if (approvedPayment) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-16 text-center">
         <div className="rounded-3xl border border-green-500/30 bg-green-500/10 p-8">
           <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-500/20 text-3xl">✓</div>
           <h1 className="mt-5 text-3xl font-black">Pagamento aprovado</h1>
-          <p className="mx-auto mt-3 max-w-xl leading-7 text-zinc-300">Seu pedido foi registrado e o carrinho foi limpo. O estoque é baixado automaticamente somente após a confirmação do Mercado Pago.</p>
-          <Link href="/produtos" className="mt-7 inline-block rounded-xl bg-blue-600 px-6 py-3 font-bold hover:bg-blue-500">Continuar comprando</Link>
+          <p className="mx-auto mt-3 max-w-xl leading-7 text-zinc-300">Pedido <strong className="text-white">{approvedPayment.orderNumber}</strong> confirmado. O estoque foi baixado automaticamente após a aprovação do Mercado Pago.</p>
+          <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-zinc-400">A loja também recebe a notificação automática pelo WhatsApp. O botão abaixo continua disponível como confirmação manual de segurança.</p>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
+            {approvedPayment.whatsappUrl ? <a href={approvedPayment.whatsappUrl} target="_blank" rel="noreferrer" className="rounded-xl bg-green-600 px-6 py-3 font-bold text-white hover:bg-green-500">Confirmar também pelo WhatsApp</a> : null}
+            <Link href="/produtos" className="rounded-xl bg-blue-600 px-6 py-3 font-bold hover:bg-blue-500">Continuar comprando</Link>
+          </div>
         </div>
       </main>
     );
