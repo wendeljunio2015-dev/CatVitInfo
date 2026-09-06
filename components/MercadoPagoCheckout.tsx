@@ -50,8 +50,17 @@ export default function MercadoPagoCheckout({ orderId, orderNumber, amount, cust
 
   const confirmApproved = (url: string) => {
     stopPolling();
+    setPix(null);
     setApprovedUrl(url);
     setMessage("Pagamento aprovado. Pedido confirmado!");
+
+    const payment = paymentController.current;
+    const status = statusController.current;
+    paymentController.current = null;
+    statusController.current = null;
+    if (payment) void payment.unmount();
+    if (status) void status.unmount();
+
     onApproved(url);
   };
 
@@ -101,7 +110,7 @@ export default function MercadoPagoCheckout({ orderId, orderNumber, amount, cust
 
   useEffect(() => {
     const MercadoPago = window.MercadoPago;
-    if (!sdkReady || !MercadoPago || !publicKey) return;
+    if (!sdkReady || !MercadoPago || !publicKey || approvedUrl) return;
     let cancelled = false;
 
     const setup = async () => {
@@ -173,10 +182,24 @@ export default function MercadoPagoCheckout({ orderId, orderNumber, amount, cust
       void paymentController.current?.unmount();
       void statusController.current?.unmount();
     };
-  }, [sdkReady, publicKey, amount, customerEmail, orderId]);
+  }, [sdkReady, publicKey, amount, customerEmail, orderId, approvedUrl]);
 
   if (!publicKey) {
     return <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-5 text-sm text-amber-200">Checkout Mercado Pago aguardando a configuração da chave pública.</div>;
+  }
+
+  if (approvedUrl) {
+    return (
+      <section className="space-y-4">
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6 text-center">
+          <div className="text-4xl">✓</div>
+          <h2 className="mt-3 text-2xl font-black text-emerald-300">Pagamento aprovado!</h2>
+          <p className="mt-2 text-sm text-zinc-300">Pedido <strong>{orderNumber}</strong> confirmado com sucesso.</p>
+          <p className="mt-1 text-sm text-zinc-400">Os dados de pagamento foram encerrados nesta tela.</p>
+        </div>
+        <a href={approvedUrl} target="_blank" rel="noreferrer" className="block rounded-xl bg-green-600 px-5 py-4 text-center font-black hover:bg-green-500">Enviar confirmação do pedido ao vendedor no WhatsApp</a>
+      </section>
+    );
   }
 
   return (
@@ -196,7 +219,6 @@ export default function MercadoPagoCheckout({ orderId, orderNumber, amount, cust
           {pix.qrCode ? <button type="button" onClick={() => navigator.clipboard.writeText(pix.qrCode || "")} className="mt-3 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-black hover:bg-emerald-500">Copiar código Pix</button> : null}
         </div>
       ) : null}
-      {approvedUrl ? <a href={approvedUrl} target="_blank" rel="noreferrer" className="block rounded-xl bg-green-600 px-5 py-4 text-center font-black hover:bg-green-500">Enviar confirmação do pedido ao vendedor no WhatsApp</a> : null}
     </section>
   );
 }
