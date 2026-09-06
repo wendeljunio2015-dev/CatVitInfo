@@ -32,6 +32,8 @@ const selectionLabels: Record<SelectionKey, string> = {
   kit: "Kit Upgrade",
 };
 
+const summaryOrder: SelectionKey[] = ["kit", "cpu", "motherboard", "memory", "storage", "gpu", "psu", "cooler", "case"];
+
 function extractSocket(product?: Product) {
   if (!product) return null;
   const text = [product.name, product.description, ...(product.specs ?? [])].join(" ").toUpperCase();
@@ -59,7 +61,6 @@ export default function MonteSeuPcPage() {
   const [selection, setSelection] = useState<Selection>({});
   const [loading, setLoading] = useState(true);
   const [openGroup, setOpenGroup] = useState<GroupKey | "kits" | null>(null);
-  const [paymentMode, setPaymentMode] = useState<"orcamento" | "mercado_pago">("orcamento");
 
   useEffect(() => {
     fetch("/api/catalog/products", { cache: "no-store" })
@@ -75,7 +76,9 @@ export default function MonteSeuPcPage() {
   const upgradeKits = products.filter((product) => product.category === "Kits Upgrade" && product.stockStatus !== "indisponivel");
   const selectedKit = selection.kit;
 
-  const selectedEntries = (Object.entries(selection) as [SelectionKey, Product | undefined][]).filter((entry): entry is [SelectionKey, Product] => Boolean(entry[1]));
+  const selectedEntries = summaryOrder
+    .map((key) => [key, selection[key]] as const)
+    .filter((entry): entry is readonly [SelectionKey, Product] => Boolean(entry[1]));
   const selectedItems = selectedEntries.map(([, product]) => product);
 
   const mainPartsCompleted = selectedKit
@@ -198,20 +201,21 @@ export default function MonteSeuPcPage() {
             {selectedKit ? <div className="mt-5 rounded-xl border border-blue-500/20 bg-blue-500/10 p-4 text-sm text-blue-300">Kit Upgrade selecionado: processador e placa-mãe já estão considerados no kit.</div> : incompatible ? <div className="mt-5 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm leading-6 text-red-300">Atenção: o processador selecionado usa {cpuSocket} e a placa-mãe usa {motherboardSocket}. Essa combinação parece incompatível.</div> : cpuSocket && motherboardSocket ? <div className="mt-5 rounded-xl border border-green-500/20 bg-green-500/10 p-4 text-sm text-green-300">Socket compatível identificado: {cpuSocket}.</div> : <div className="mt-5 rounded-xl border border-zinc-800 bg-zinc-950 p-4 text-xs leading-5 text-zinc-500">A compatibilidade automática é uma ajuda inicial. A Vitória Informática confirma a configuração antes da venda.</div>}
 
             <div className="mt-5">
-              <p className="text-xs font-black uppercase tracking-widest text-zinc-500">Opção de pagamento</p>
+              <p className="text-xs font-black uppercase tracking-widest text-zinc-500">Como deseja continuar?</p>
               <div className="mt-3 grid gap-2">
-                <button type="button" onClick={() => setPaymentMode("mercado_pago")} className={`rounded-xl border p-3 text-left ${paymentMode === "mercado_pago" ? "border-blue-500 bg-blue-500/10" : "border-zinc-800 bg-zinc-950 hover:border-zinc-700"}`}>
-                  <span className="block text-sm font-black text-white">Pagar pelo Mercado Pago</span>
-                  <span className="mt-1 block text-xs leading-5 text-zinc-400">Pix ou cartão. O checkout online será liberado quando concluirmos a integração de pagamento.</span>
+                <button type="button" disabled className="cursor-not-allowed rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-left opacity-60">
+                  <span className="flex items-center justify-between gap-3"><span className="text-sm font-black text-white">Pagar pelo Mercado Pago</span><span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-1 text-[10px] font-black uppercase tracking-wide text-blue-300">Em breve</span></span>
+                  <span className="mt-1 block text-xs leading-5 text-zinc-400">Pix ou cartão. O checkout será ativado quando concluirmos a integração de pagamento.</span>
                 </button>
-                <button type="button" onClick={() => setPaymentMode("orcamento")} className={`rounded-xl border p-3 text-left ${paymentMode === "orcamento" ? "border-green-500 bg-green-500/10" : "border-zinc-800 bg-zinc-950 hover:border-zinc-700"}`}>
-                  <span className="block text-sm font-black text-white">Somente orçamento</span>
-                  <span className="mt-1 block text-xs leading-5 text-zinc-400">Enviar a configuração pelo WhatsApp para confirmar disponibilidade, condições e orçamento final.</span>
-                </button>
+                {selectedItems.length ? <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-green-500 bg-green-500/10 p-3 text-left transition hover:bg-green-500/20">
+                  <span className="block text-sm font-black text-white">Solicitar orçamento pelo WhatsApp</span>
+                  <span className="mt-1 block text-xs leading-5 text-zinc-300">Enviar esta configuração para confirmar disponibilidade, condições e orçamento final.</span>
+                </a> : <div className="cursor-not-allowed rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-left opacity-50">
+                  <span className="block text-sm font-black text-white">Solicitar orçamento pelo WhatsApp</span>
+                  <span className="mt-1 block text-xs leading-5 text-zinc-400">Selecione pelo menos um item para solicitar um orçamento.</span>
+                </div>}
               </div>
             </div>
-
-            {paymentMode === "mercado_pago" ? <div className="mt-4 rounded-xl border border-blue-500/20 bg-blue-500/10 p-4 text-sm leading-6 text-blue-300">Pagamento pelo Mercado Pago ainda não está ativo nesta etapa. Você pode salvar sua montagem escolhendo “Somente orçamento” e enviar pelo WhatsApp.</div> : <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-5 block rounded-xl bg-green-600 px-5 py-3 text-center font-black hover:bg-green-500">Enviar orçamento pelo WhatsApp</a>}
 
             <button onClick={() => { setSelection({}); setOpenGroup(null); }} disabled={!selectedItems.length} className="mt-3 w-full rounded-xl border border-zinc-700 px-5 py-3 font-bold disabled:cursor-not-allowed disabled:opacity-40 hover:bg-zinc-800">Limpar configuração</button>
           </div>
