@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { useCart } from "@/context/CartContext";
 import type { Product } from "@/types/product";
 
@@ -13,17 +14,26 @@ function WhatsAppIcon() {
 
 export default function ProductActions({ product }: { product: Product }) {
   const { addItem } = useCart();
+  const [added, setAdded] = useState(false);
+  const feedbackTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const unavailable = product.stockStatus === "indisponivel";
   const message = encodeURIComponent(`Olá! Tenho interesse em: ${product.name} - R$ ${product.price.toFixed(2).replace(".", ",")}`);
+  const handleAdd = () => {
+    addItem(product);
+    setAdded(true);
+    if (feedbackTimer.current) clearTimeout(feedbackTimer.current);
+    feedbackTimer.current = setTimeout(() => setAdded(false), 1800);
+  };
 
   return (
     <div className="grid gap-3 sm:grid-cols-2">
       <button
         disabled={unavailable}
-        onClick={() => addItem(product)}
-        className="rounded-xl bg-blue-600 px-5 py-3 font-bold hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400"
+        onClick={handleAdd}
+        aria-live="polite"
+        className={`rounded-xl px-5 py-3 font-bold transition-all duration-200 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-zinc-400 ${added ? "scale-[1.02] bg-emerald-600 text-white shadow-lg shadow-emerald-950/30" : "bg-blue-600 text-white hover:bg-blue-500"}`}
       >
-        {unavailable ? "Indisponível" : "Adicionar ao carrinho"}
+        {unavailable ? "Indisponível" : added ? "✓ Adicionado ao carrinho" : "Adicionar ao carrinho"}
       </button>
       <a
         href={`/whatsapp?text=${message}`}
