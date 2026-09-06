@@ -67,7 +67,20 @@ export async function POST(request: Request) {
     await db.sql`INSERT INTO orders (id,order_number,customer_id,customer_name,items,total,status,source,seller_id,seller_name,seller_commission_rate) VALUES (${id},${orderNumber},${customerId},${customerName},${JSON.stringify(items)}::jsonb,${total},${initialStatus},${channel},${sellerId},${sellerName},${sellerCommissionRate})`;
 
     const money = new Intl.NumberFormat("pt-BR", { style:"currency", currency:"BRL" });
-    const lines = [`Olá! Gostaria de solicitar o orçamento ${orderNumber} na Vitória Informática:`, sellerName ? `Atendimento: ${sellerName}` : "", customerName ? `Cliente: ${customerName}` : "", customerPhone ? `WhatsApp: ${customerPhone}` : "", "", ...items.map((item) => `• ${item.quantity}x ${item.name} — ${money.format(item.subtotal)}`), "", `Total estimado: ${money.format(total)}`, "", "Por favor, confirme disponibilidade, garantia e condições de retirada/entrega em Goiânia."].filter(Boolean);
+    const lines = [
+      `Olá! Gostaria de solicitar somente um orçamento (${orderNumber}) na Vitória Informática.`,
+      sellerName ? `Atendimento: ${sellerName}` : "",
+      customerName ? `Cliente: ${customerName}` : "",
+      customerPhone ? `WhatsApp: ${customerPhone}` : "",
+      "",
+      ...items.map((item) => `• ${item.quantity}x ${item.name} — ${money.format(item.subtotal)}`),
+      "",
+      `Total atual do carrinho: ${money.format(total)}`,
+      "",
+      "Este pedido é somente para orçamento e não confirma a compra.",
+      "Gostaria de verificar desconto por quantidade e outras condições comerciais.",
+      "Por favor, confirme disponibilidade, valor negociado e condições de retirada/entrega em Goiânia.",
+    ].filter(Boolean);
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
     return NextResponse.json({ ok:true, id, orderNumber, total, customerId, sellerId, channel, whatsappUrl });
   } catch (error) {
