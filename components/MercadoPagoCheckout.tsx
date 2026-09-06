@@ -4,13 +4,15 @@ import { useEffect, useRef, useState } from "react";
 
 type CheckoutItem = { productId: string; quantity: number };
 
+type ApprovedResult = { orderNumber: string; whatsappUrl: string };
+
 type Props = {
   amount: number;
   customerName: string;
   customerPhone: string;
   customerEmail: string;
   items: CheckoutItem[];
-  onApproved: () => void;
+  onApproved: (result: ApprovedResult) => void;
   onClose: () => void;
 };
 
@@ -145,7 +147,7 @@ export default function MercadoPagoCheckout({ amount, customerName, customerPhon
 
                   if (result.approved && result.stockDeducted && !approvedHandled.current) {
                     approvedHandled.current = true;
-                    onApproved();
+                    onApproved({ orderNumber: result.orderNumber, whatsappUrl: result.whatsappUrl || "" });
                   }
                   resolve();
                 } catch (submissionError) {
@@ -184,10 +186,11 @@ export default function MercadoPagoCheckout({ amount, customerName, customerPhon
         if (!response.ok || !active) return;
         const result = await response.json();
         setPaymentState(String(result.paymentStatus || "em processamento"));
-        if (result.whatsappUrl) setWhatsappUrl(String(result.whatsappUrl));
+        const latestWhatsappUrl = result.whatsappUrl ? String(result.whatsappUrl) : whatsappUrl;
+        if (result.whatsappUrl) setWhatsappUrl(latestWhatsappUrl);
         if (result.approved && result.stockDeducted && !approvedHandled.current) {
           approvedHandled.current = true;
-          onApproved();
+          onApproved({ orderNumber: String(result.orderNumber || orderNumber), whatsappUrl: latestWhatsappUrl });
         }
       } catch {
         // O Status Screen continua funcionando mesmo se uma consulta temporária falhar.
@@ -200,7 +203,7 @@ export default function MercadoPagoCheckout({ amount, customerName, customerPhon
       active = false;
       window.clearInterval(interval);
     };
-  }, [orderId, onApproved]);
+  }, [orderId, orderNumber, whatsappUrl, onApproved]);
 
   return (
     <div className="mt-4 rounded-2xl border border-blue-500/30 bg-zinc-950 p-4 sm:p-6">
