@@ -19,7 +19,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   try {
     await client.query("BEGIN");
     const orderResult = await client.query(
-      "SELECT id, items, total, seller_id, seller_commission_rate, commission_amount, stock_deducted_at, stock_restored_at FROM orders WHERE id = $1 FOR UPDATE",
+      "SELECT id, items, total, status, source, seller_id, seller_commission_rate, commission_amount, stock_deducted_at, stock_restored_at FROM orders WHERE id = $1 FOR UPDATE",
       [id],
     );
     if (!orderResult.rows.length) {
@@ -30,6 +30,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const order = orderResult.rows[0] as {
       items: OrderItem[];
       total: number;
+      status: string;
+      source: string;
       seller_id: string | null;
       seller_commission_rate: number | null;
       commission_amount: number | null;
@@ -37,6 +39,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       stock_restored_at: string | null;
     };
     const items = Array.isArray(order.items) ? order.items : [];
+
+    if (order.source === "mercado_pago") {
+      const canFinish = ["pago", "pago_revisao_estoque"].includes(String(order.status)) && status === "concluido";
+      const noChange = String(order.status) === "concluido" && status === "concluido";
+      if (!canFinish && !noChange) {
+        throw new Error("Pedidos do Mercado Pago têm o status financeiro sincronizado automaticamente. Para cancelar uma venda paga, faça o reembolso/estorno pelo Mercado Pago; não altere o pedido manualmente.");
+      }
+    }
 
     if (order.stock_deducted_at && !order.stock_restored_at && !["concluido", "cancelado"].includes(status)) {
       throw new Error("Venda concluída não pode voltar para um status aberto. Cancele a venda para restaurar estoque e comissão com segurança.");
