@@ -17,3 +17,22 @@ CREATE TABLE IF NOT EXISTS payments (
 
 CREATE INDEX IF NOT EXISTS payments_order_id_idx ON payments(order_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS payments_status_idx ON payments(status);
+
+ALTER TABLE orders
+DROP CONSTRAINT IF EXISTS orders_status_check;
+
+ALTER TABLE orders
+ADD CONSTRAINT orders_status_check
+CHECK (status IN (
+  'novo',
+  'em_atendimento',
+  'concluido',
+  'cancelado',
+  'aguardando_pagamento',
+  'pago',
+  'pago_revisao_estoque',
+  'pagamento_recusado',
+  'cancelled',
+  'refunded',
+  'charged_back'
+));
