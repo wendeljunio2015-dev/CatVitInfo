@@ -3,6 +3,12 @@
 import Script from "next/script";
 import { useEffect, useRef, useState } from "react";
 
+type MercadoPagoInstance = {
+  bricks: () => {
+    create: (name: string, container: string, settings: Record<string, unknown>) => Promise<{ unmount: () => Promise<void> | void }>;
+  };
+};
+
 type CheckoutProps = {
   orderId: string;
   orderNumber: string;
@@ -24,11 +30,7 @@ type PaymentResult = {
 
 declare global {
   interface Window {
-    MercadoPago?: new (publicKey: string, options?: { locale?: string }) => {
-      bricks: () => {
-        create: (name: string, container: string, settings: Record<string, unknown>) => Promise<{ unmount: () => Promise<void> | void }>;
-      };
-    };
+    MercadoPago?: new (publicKey: string, options?: { locale?: string }) => MercadoPagoInstance;
   }
 }
 
@@ -75,7 +77,7 @@ export default function MercadoPagoCheckout({ orderId, orderNumber, amount, cust
     }, 3000);
   };
 
-  const renderStatusScreen = async (mp: InstanceType<NonNullable<typeof window.MercadoPago>>, result: PaymentResult) => {
+  const renderStatusScreen = async (mp: MercadoPagoInstance, result: PaymentResult) => {
     if (!result.paymentId || !result.threeDsInfo?.externalResourceURL || !result.threeDsInfo?.creq) return;
     await paymentController.current?.unmount();
     paymentController.current = null;
@@ -98,12 +100,13 @@ export default function MercadoPagoCheckout({ orderId, orderNumber, amount, cust
   };
 
   useEffect(() => {
-    if (!sdkReady || !window.MercadoPago || !publicKey) return;
+    const MercadoPago = window.MercadoPago;
+    if (!sdkReady || !MercadoPago || !publicKey) return;
     let cancelled = false;
 
     const setup = async () => {
       try {
-        const mp = new window.MercadoPago!(publicKey, { locale: "pt-BR" });
+        const mp = new MercadoPago(publicKey, { locale: "pt-BR" });
         const bricksBuilder = mp.bricks();
         const controller = await bricksBuilder.create("payment", "paymentBrick_container", {
           initialization: {
@@ -115,7 +118,7 @@ export default function MercadoPagoCheckout({ orderId, orderNumber, amount, cust
               creditCard: "all",
               debitCard: "all",
               prepaidCard: "all",
-              bankTransfer: ["pix"],
+              bankTransfer: "pix",
             },
           },
           callbacks: {
