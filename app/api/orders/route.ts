@@ -64,7 +64,7 @@ export async function POST(request: Request) {
 
     const total = items.reduce((sum, item) => sum + item.subtotal, 0);
     const id = crypto.randomUUID(); const orderNumber = makeOrderNumber(); const initialStatus = channel === "mercado_pago" ? "aguardando_pagamento" : "novo";
-    await db.sql`INSERT INTO orders (id,order_number,customer_id,customer_name,items,total,status,source,seller_id,seller_name,seller_commission_rate) VALUES (${id},${orderNumber},${customerId},${customerName},${JSON.stringify(items)}::jsonb,${total},${initialStatus},'whatsapp',${sellerId},${sellerName},${sellerCommissionRate})`;
+    await db.sql`INSERT INTO orders (id,order_number,customer_id,customer_name,items,total,status,source,seller_id,seller_name,seller_commission_rate) VALUES (${id},${orderNumber},${customerId},${customerName},${JSON.stringify(items)}::jsonb,${total},${initialStatus},${channel},${sellerId},${sellerName},${sellerCommissionRate})`;
 
     const money = new Intl.NumberFormat("pt-BR", { style:"currency", currency:"BRL" });
     const lines = [`Olá! Gostaria de solicitar o orçamento ${orderNumber} na Vitória Informática:`, sellerName ? `Atendimento: ${sellerName}` : "", customerName ? `Cliente: ${customerName}` : "", customerPhone ? `WhatsApp: ${customerPhone}` : "", "", ...items.map((item) => `• ${item.quantity}x ${item.name} — ${money.format(item.subtotal)}`), "", `Total estimado: ${money.format(total)}`, "", "Por favor, confirme disponibilidade, garantia e condições de retirada/entrega em Goiânia."].filter(Boolean);
