@@ -1,4 +1,5 @@
 import { getDatabase } from "@netlify/database";
+import { queueAndSendApprovedOrderNotification } from "@/lib/whatsapp-cloud";
 
 export type MercadoPagoPayment = {
   id?: string | number;
@@ -15,6 +16,14 @@ export type MercadoPagoPayment = {
 };
 
 type OrderItem = { productId?: string; quantity?: number; name?: string };
+
+async function notifyApprovedOrder(orderId: string) {
+  try {
+    await queueAndSendApprovedOrderNotification(orderId);
+  } catch (error) {
+    console.error("WhatsApp seller notification error", error);
+  }
+}
 
 export async function reconcileMercadoPagoPayment(payment: MercadoPagoPayment) {
   const externalReference = String(payment.external_reference || "").trim();
@@ -91,6 +100,7 @@ export async function reconcileMercadoPagoPayment(payment: MercadoPagoPayment) {
         await client.query("UPDATE orders SET status = 'cancelado', updated_at = NOW() WHERE id = $1", [order.id]);
       }
       await client.query("COMMIT");
+      if (paymentStatus === "approved" && order.stock_deducted_at) await notifyApprovedOrder(order.id);
       return { matched: true, approved: paymentStatus === "approved", stockDeducted: Boolean(order.stock_deducted_at), amountMatches };
     }
 
@@ -152,9 +162,10 @@ export async function reconcileMercadoPagoPayment(payment: MercadoPagoPayment) {
     );
 
     await client.query("COMMIT");
+    await notifyApprovedOrder(order.id);
     return { matched: true, approved: true, stockDeducted: true, amountMatches: true };
   } catch (error) {
-    await client.query("ROLLBACK");
+    await client.query("ROLLBACK").catch(() => {});
     throw error;
   } finally {
     client.release();
