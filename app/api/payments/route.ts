@@ -1,5 +1,6 @@
 import { getDatabase } from "@netlify/database";
 import { NextResponse } from "next/server";
+import { syncMercadoPagoPayment } from "@/lib/mercado-pago-sync";
 
 function normalizeItems(raw: unknown) {
   if (Array.isArray(raw)) return raw;
@@ -9,7 +10,7 @@ function normalizeItems(raw: unknown) {
   return [];
 }
 
-function buildWhatsAppUrl(order: any, payment: any) {
+function buildWhatsAppUrl(order: any, payment: any, orderStatus?: string) {
   const storeWhatsApp = "5562994780830";
   const whatsappNumber = String(order.seller_phone || storeWhatsApp).replace(/\D/g, "") || storeWhatsApp;
   const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
@@ -30,42 +31,11 @@ function buildWhatsAppUrl(order: any, payment: any) {
     payment.payment_method_id !== "pix" ? `Parcelas: ${installments}x` : "",
     `Status: ${payment.status === "approved" ? "APROVADO" : String(payment.status || "em processamento").toUpperCase()}`,
     `ID Mercado Pago: ${payment.id}`,
+    orderStatus === "pago_revisao_estoque" ? "⚠️ ATENÇÃO: pagamento aprovado, mas o estoque precisa de revisão manual." : "",
     "",
     "Favor separar os produtos e confirmar retirada/entrega com o cliente.",
   ].filter(Boolean);
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
-}
-
-async function savePayment(db: ReturnType<typeof getDatabase>, orderId: string, payment: any) {
-  const providerPaymentId = String(payment.id || "");
-  if (!providerPaymentId) return;
-  const recordId = `mercado_pago:${providerPaymentId}`;
-  const status = String(payment.status || "unknown");
-  const statusDetail = payment.status_detail ? String(payment.status_detail) : null;
-  const paymentMethod = payment.payment_method_id ? String(payment.payment_method_id) : null;
-  const installments = Number.isFinite(Number(payment.installments)) ? Number(payment.installments) : null;
-  const amount = Number(payment.transaction_amount || 0);
-  const currency = String(payment.currency_id || "BRL");
-  const approvedAt = payment.date_approved ? new Date(payment.date_approved).toISOString() : null;
-
-  await db.sql`
-    INSERT INTO payments (
-      id, order_id, provider, provider_payment_id, status, status_detail,
-      payment_method, installments, amount, currency, approved_at, updated_at
-    ) VALUES (
-      ${recordId}, ${orderId}, 'mercado_pago', ${providerPaymentId}, ${status}, ${statusDetail},
-      ${paymentMethod}, ${installments}, ${amount}, ${currency}, ${approvedAt}, NOW()
-    )
-    ON CONFLICT (provider, provider_payment_id) DO UPDATE SET
-      order_id = EXCLUDED.order_id,
-      status = EXCLUDED.status,
-      status_detail = EXCLUDED.status_detail,
-      payment_method = EXCLUDED.payment_method,
-      installments = EXCLUDED.installments,
-      amount = EXCLUDED.amount,
-      currency = EXCLUDED.currency,
-      approved_at = EXCLUDED.approved_at,
-      updated_at = NOW()`;
 }
 
 export async function POST(request: Request) {
@@ -93,7 +63,9 @@ export async function POST(request: Request) {
     if (!rows.length) return NextResponse.json({ error: "Pedido não encontrado." }, { status: 404 });
     const order: any = rows[0];
     if (Number(order.total) <= 0) return NextResponse.json({ error: "Valor do pedido inválido." }, { status: 400 });
-    if (["pago", "cancelado", "estornado"].includes(String(order.status))) return NextResponse.json({ error: "Este pedido não aceita um novo pagamento." }, { status: 409 });
+    if (["pago", "pago_revisao_estoque", "concluido", "cancelado", "refunded", "charged_back"].includes(String(order.status))) {
+      return NextResponse.json({ error: "Este pedido não aceita um novo pagamento." }, { status: 409 });
+    }
 
     const payer = formData.payer && typeof formData.payer === "object" ? formData.payer : {};
     const payload: Record<string, unknown> = {
@@ -115,8 +87,7 @@ export async function POST(request: Request) {
     };
     Object.keys(payload).forEach((key) => payload[key] === undefined && delete payload[key]);
 
-    const notificationUrl = `${new URL(request.url).origin}/api/mercadopago/webhook`;
-    payload.notification_url = notificationUrl;
+    payload.notification_url = `${new URL(request.url).origin}/api/mercadopago/webhook`;
 
     const mpResponse = await fetch("https://api.mercadopago.com/v1/payments", {
       method: "POST",
@@ -133,18 +104,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: detail }, { status: mpResponse.status >= 500 ? 502 : 400 });
     }
 
-    await savePayment(db, orderId, payment);
-
-    const newStatus = payment.status === "approved" ? "pago" : payment.status === "rejected" ? "pagamento_recusado" : "aguardando_pagamento";
-    await db.sql`UPDATE orders SET status=${newStatus}, source='mercado_pago', updated_at=NOW() WHERE id=${orderId}`;
+    const syncResult = await syncMercadoPagoPayment(payment, orderId);
 
     const result: Record<string, unknown> = {
       paymentId: payment.id,
       status: payment.status,
       statusDetail: payment.status_detail,
+      orderStatus: syncResult.orderStatus,
     };
 
-    if (payment.status === "approved") result.whatsappUrl = buildWhatsAppUrl(order, payment);
+    if (payment.status === "approved") result.whatsappUrl = buildWhatsAppUrl(order, payment, syncResult.orderStatus);
     if (payment.status_detail === "pending_challenge" && payment.three_ds_info) {
       result.threeDsInfo = {
         externalResourceURL: payment.three_ds_info.external_resource_url,
