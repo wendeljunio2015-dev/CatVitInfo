@@ -1,23 +1,11 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { getDatabase } from "@netlify/database";
 import { NextResponse } from "next/server";
+import { reconcileMercadoPagoPayment, type MercadoPagoPayment } from "@/lib/mercadopago-payment";
 
 type MercadoPagoNotification = {
   type?: string;
   action?: string;
   data?: { id?: string | number };
-};
-
-type MercadoPagoPayment = {
-  id?: string | number;
-  status?: string;
-  status_detail?: string;
-  payment_method_id?: string;
-  payment_type_id?: string;
-  external_reference?: string | null;
-  transaction_amount?: number;
-  date_approved?: string | null;
-  date_last_updated?: string | null;
 };
 
 function parseSignature(value: string | null) {
@@ -95,30 +83,8 @@ export async function POST(request: Request) {
 
   try {
     const payment = await fetchPayment(paymentId, accessToken);
-    const externalReference = String(payment.external_reference || "").trim();
-    if (!externalReference) return NextResponse.json({ ok: true, ignored: true, reason: "missing_external_reference" });
-
-    const db = getDatabase();
-    const paymentIdValue = String(payment.id || paymentId);
-    const paymentAmount = Number(payment.transaction_amount || 0);
-
-    await db.sql`
-      UPDATE orders
-      SET payment_provider = 'mercado_pago',
-          payment_id = ${paymentIdValue},
-          payment_status = ${String(payment.status || "") || null},
-          payment_status_detail = ${String(payment.status_detail || "") || null},
-          payment_method_id = ${String(payment.payment_method_id || "") || null},
-          payment_type_id = ${String(payment.payment_type_id || "") || null},
-          payment_external_reference = ${externalReference},
-          payment_amount = ${Number.isFinite(paymentAmount) ? paymentAmount : null},
-          payment_approved_at = ${payment.date_approved || null},
-          payment_updated_at = ${payment.date_last_updated || new Date().toISOString()},
-          updated_at = NOW()
-      WHERE id = ${externalReference} OR order_number = ${externalReference}
-    `;
-
-    return NextResponse.json({ ok: true });
+    const result = await reconcileMercadoPagoPayment(payment);
+    return NextResponse.json({ ok: true, matched: result.matched });
   } catch (error) {
     console.error("Mercado Pago webhook error", error);
     return NextResponse.json({ error: "Falha ao processar notificação" }, { status: 500 });
