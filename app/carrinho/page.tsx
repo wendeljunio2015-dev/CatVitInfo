@@ -70,7 +70,19 @@ export default function CartPage() {
         </div>
         <p className="mt-4 text-sm leading-6 text-zinc-400">Ao informar nome e WhatsApp, seus dados serão vinculados ao orçamento para facilitar futuros atendimentos. O estoque é validado novamente antes de registrar o orçamento.</p>
         {error ? <p className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm font-bold text-red-300">{error}</p> : null}
-        <button onClick={checkout} disabled={sending} className="mt-6 w-full rounded-xl bg-green-600 px-5 py-4 font-black hover:bg-green-500 disabled:cursor-not-allowed disabled:bg-zinc-700">{sending ? "Registrando orçamento..." : "Enviar orçamento pelo WhatsApp"}</button>
+        <div className="mt-6">
+          <p className="text-xs font-black uppercase tracking-widest text-zinc-500">Como deseja continuar?</p>
+          <div className="mt-3 grid gap-3">
+            <button type="button" disabled className="cursor-not-allowed rounded-xl border border-blue-500/20 bg-blue-500/5 px-5 py-4 text-left opacity-70">
+              <span className="flex items-center justify-between gap-3"><span className="font-black text-white">Pagar pelo Mercado Pago</span><span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-blue-300">Em breve</span></span>
+              <span className="mt-1 block text-sm leading-6 text-zinc-400">Pix ou cartão. Checkout online em preparação.</span>
+            </button>
+            <button type="button" onClick={checkout} disabled={sending} className="rounded-xl border border-green-500/30 bg-green-500/10 px-5 py-4 text-left hover:bg-green-500/20 disabled:cursor-not-allowed disabled:opacity-60">
+              <span className="block font-black text-white">{sending ? "Registrando orçamento..." : "Somente orçamento"}</span>
+              <span className="mt-1 block text-sm leading-6 text-zinc-300">Enviar o carrinho pelo WhatsApp para confirmar disponibilidade, condições e orçamento final.</span>
+            </button>
+          </div>
+        </div>
       </aside>
     </main>
   );
