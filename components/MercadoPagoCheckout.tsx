@@ -119,10 +119,12 @@ export default function MercadoPagoCheckout({ orderId, orderNumber, amount, cust
               debitCard: "all",
               prepaidCard: "all",
               bankTransfer: "pix",
+              minInstallments: 1,
+              maxInstallments: 12,
             },
           },
           callbacks: {
-            onReady: () => setMessage("Escolha Pix ou cartão e conclua o pagamento com segurança."),
+            onReady: () => setMessage("Escolha Pix ou cartão. No crédito, selecione uma das parcelas disponíveis para o cartão informado."),
             onSubmit: ({ formData }: { formData: Record<string, unknown> }) =>
               new Promise<void>(async (resolve, reject) => {
                 try {
