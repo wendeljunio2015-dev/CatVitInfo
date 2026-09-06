@@ -13,6 +13,8 @@ const componentGroups = [
   { key: "storage", label: "SSD / Armazenamento", categories: ["SSDs"] },
   { key: "gpu", label: "Placa de Vídeo", categories: ["Placas de Vídeo"] },
   { key: "psu", label: "Fonte", categories: ["Fontes"] },
+  { key: "cooler", label: "Cooler", categories: ["Coolers"] },
+  { key: "case", label: "Gabinete", categories: ["Gabinetes"] },
 ] as const;
 
 type GroupKey = (typeof componentGroups)[number]["key"];
