@@ -77,7 +77,7 @@ export default function CartPage() {
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div><p className="text-sm font-bold uppercase tracking-widest text-blue-400">Compra segura</p><h1 className="mt-2 text-4xl font-black">Carrinho</h1></div>
+        <div><p className="text-sm font-bold uppercase tracking-widest text-blue-400">Compra ou orçamento</p><h1 className="mt-2 text-4xl font-black">Carrinho</h1></div>
         {items.length ? <button onClick={clearCart} disabled={Boolean(paymentOrder)} className="rounded-xl border border-zinc-700 px-4 py-2 text-sm font-bold hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40">Limpar carrinho</button> : null}
       </div>
 
@@ -90,16 +90,17 @@ export default function CartPage() {
 
       <aside className="mt-8 rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
         {items.length ? <>
-          <div className="flex items-center justify-between gap-4"><span className="text-zinc-400">Total</span><strong className="text-3xl text-blue-500">{money.format(total)}</strong></div>
+          <div className="flex items-center justify-between gap-4"><span className="text-zinc-400">Total atual do carrinho</span><strong className="text-3xl text-blue-500">{money.format(total)}</strong></div>
+          <p className="mt-2 text-sm text-zinc-500">Para orçamento, este valor é uma referência. Descontos por quantidade e condições especiais podem ser negociados pelo WhatsApp.</p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div><label className="text-sm font-bold text-zinc-300">Seu nome</label><input disabled={Boolean(paymentOrder)} value={customerName} onChange={(e) => setCustomerName(e.target.value)} maxLength={120} placeholder="Nome do cliente" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 disabled:opacity-60" /></div>
-            <div><label className="text-sm font-bold text-zinc-300">WhatsApp</label><input disabled={Boolean(paymentOrder)} value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} inputMode="tel" placeholder="(62) 99999-9999" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 disabled:opacity-60" /></div>
-            <div className="md:col-span-2"><label className="text-sm font-bold text-zinc-300">E-mail</label><input disabled={Boolean(paymentOrder)} value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} type="email" placeholder="cliente@email.com" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 disabled:opacity-60" /></div>
+            <div><label className="text-sm font-bold text-zinc-300">WhatsApp</label><input disabled={Boolean(paymentOrder)} value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} inputMode="tel" placeholder="WhatsApp do cliente" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 disabled:opacity-60" /></div>
+            <div className="md:col-span-2"><label className="text-sm font-bold text-zinc-300">E-mail <span className="font-normal text-zinc-500">(necessário somente para pagamento online)</span></label><input disabled={Boolean(paymentOrder)} value={customerEmail} onChange={(e) => setCustomerEmail(e.target.value)} type="email" placeholder="cliente@email.com" className="mt-2 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 disabled:opacity-60" /></div>
           </div>
           {error ? <p className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm font-bold text-red-300">{error}</p> : null}
         </> : null}
 
-        {!paymentOrder && items.length ? <div className="mt-6 grid gap-3 md:grid-cols-2"><button onClick={checkoutMercadoPago} disabled={sending || !mercadoPagoPublicKey} className="rounded-xl bg-blue-600 px-5 py-4 font-black disabled:bg-zinc-700">{sending ? "Preparando..." : "Pagar com Mercado Pago"}</button><button onClick={checkoutWhatsApp} disabled={sending} className="rounded-xl bg-green-600 px-5 py-4 font-black disabled:bg-zinc-700">Enviar orçamento pelo WhatsApp</button></div> : null}
+        {!paymentOrder && items.length ? <div className="mt-6 grid gap-4 md:grid-cols-2"><div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-4"><p className="font-black text-blue-300">Comprar agora</p><p className="mt-1 text-sm text-zinc-400">Pagamento online. Após aprovação, o estoque é baixado automaticamente.</p><button onClick={checkoutMercadoPago} disabled={sending || !mercadoPagoPublicKey} className="mt-4 w-full rounded-xl bg-blue-600 px-5 py-4 font-black disabled:bg-zinc-700">{sending ? "Preparando..." : "Pagar online"}</button></div><div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-4"><p className="font-black text-green-300">Somente orçamento</p><p className="mt-1 text-sm text-zinc-400">Envie itens e quantidades pelo WhatsApp para negociar desconto e condições. Não confirma compra e não baixa estoque.</p><button onClick={checkoutWhatsApp} disabled={sending} className="mt-4 w-full rounded-xl bg-green-600 px-5 py-4 font-black disabled:bg-zinc-700">Solicitar orçamento no WhatsApp</button></div></div> : null}
 
         {paymentOrder ? <div className="mt-6"><MercadoPagoCheckout orderId={paymentOrder.id} orderNumber={paymentOrder.orderNumber} amount={paymentOrder.total} customerEmail={customerEmail} publicKey={mercadoPagoPublicKey} onApproved={() => clearCart()} /></div> : null}
       </aside>
