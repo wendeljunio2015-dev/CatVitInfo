@@ -14,7 +14,7 @@ function LocationIcon() {
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4"><path strokeLinecap="round" strokeLinejoin="round" d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>;
 }
 
-const storeLocationUrl = "https://share.google/Gunuz7hpOrBmtrTol";
+const storeLocationUrl = "https://www.google.com/maps/dir/?api=1&destination=Vit%C3%B3ria%20Inform%C3%A1tica%2C%20Goi%C3%A2nia%20GO%2C%2074475-070&travelmode=driving";
 const storeMapEmbedUrl = "https://www.google.com/maps?q=Vit%C3%B3ria%20Inform%C3%A1tica%2C%20Goi%C3%A2nia%20GO%2C%2074475-070&output=embed";
 
 export default function Footer() {
@@ -38,7 +38,7 @@ export default function Footer() {
                 <p className="text-xs font-black uppercase tracking-widest text-blue-400">Nossa localização</p>
                 <h2 id="store-location-title" className="mt-1 break-words text-lg font-black text-white">Vitória Informática em Goiânia</h2>
               </div>
-              <a href={storeLocationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-full items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-xs font-black text-white shadow-lg shadow-green-950/30 hover:bg-green-500"><LocationIcon />Abrir no GPS</a>
+              <a href={storeLocationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-full items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-xs font-black text-white shadow-lg shadow-green-950/30 hover:bg-green-500"><LocationIcon />Traçar rota</a>
             </div>
 
             <div className="mt-4 w-full min-w-0 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950">
@@ -53,7 +53,7 @@ export default function Footer() {
                 />
               </div>
             </div>
-            <p className="mt-3 break-words text-xs leading-5 text-zinc-500">Use o botão acima para abrir a rota diretamente no Google Maps do celular.</p>
+            <p className="mt-3 break-words text-xs leading-5 text-zinc-500">Use o botão acima para traçar a rota. No celular, o Google Maps será aberto no aplicativo quando estiver disponível.</p>
           </section>
         </div>
       </div>
