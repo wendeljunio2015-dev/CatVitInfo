@@ -52,12 +52,18 @@ export default function CartPage() {
     if (customerPhone.replace(/\D/g, "").length < 10) return setError("Informe um WhatsApp válido para abrir o pagamento.");
     if (!customerEmail.trim() || !customerEmail.includes("@")) return setError("Informe um e-mail válido para abrir o pagamento.");
     setShowPayment(true);
+    window.setTimeout(() => {
+      window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "smooth" });
+    }, 120);
   };
 
   const handlePaymentApproved = useCallback((result: ApprovedPayment) => {
     clearCart();
     setApprovedPayment(result);
     setShowPayment(false);
+    window.setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }, 50);
   }, [clearCart]);
 
   const handleClearCart = () => {
