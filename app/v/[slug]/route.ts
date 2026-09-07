@@ -4,12 +4,25 @@ import { SELLER_COOKIE, SELLER_COOKIE_MAX_AGE, SELLER_FALLBACK_COOKIE } from "@/
 
 export const dynamic = "force-dynamic";
 
+const PRODUCTION_ORIGIN = "https://catvitinfo.netlify.app";
+
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] || char));
 }
 
+function isNetlifyDeployPreviewHost(hostname: string) {
+  return hostname.endsWith("--catvitinfo.netlify.app");
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
+  const requestUrl = new URL(request.url);
+
+  if (isNetlifyDeployPreviewHost(requestUrl.hostname)) {
+    const canonicalSellerUrl = new URL(`/v/${encodeURIComponent(slug)}`, PRODUCTION_ORIGIN);
+    return NextResponse.redirect(canonicalSellerUrl, 302);
+  }
+
   const db = getDatabase();
   const rows = await db.sql`SELECT id,name FROM sellers WHERE slug=${slug} AND active=TRUE LIMIT 1`;
 
