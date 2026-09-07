@@ -35,7 +35,7 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
             {product.badge && <span className="rounded-full bg-blue-600/20 px-3 py-1 text-xs font-bold text-blue-400">{product.badge}</span>}
           </div>
 
-          <h1 className="mt-5 break-words text-2xl font-black leading-[1.18] sm:text-3xl md:text-4xl lg:text-5xl">{product.name}</h1>
+          <h1 className="mt-5 break-words text-xl font-black leading-[1.2] sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl">{product.name}</h1>
           <p className="mt-4 break-words text-base leading-7 text-zinc-300 sm:mt-5 sm:text-lg sm:leading-8">{product.description}</p>
           <p className="mt-6 break-words text-3xl font-black text-blue-500 sm:mt-7 sm:text-4xl">{money.format(product.price)}</p>
 
