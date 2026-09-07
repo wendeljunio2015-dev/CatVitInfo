@@ -7,6 +7,7 @@ export type MercadoPagoPayment = {
   status_detail?: string;
   payment_method_id?: string;
   payment_type_id?: string;
+  installments?: number;
   external_reference?: string | null;
   transaction_amount?: number;
   date_approved?: string | null;
@@ -32,6 +33,9 @@ export async function reconcileMercadoPagoPayment(payment: MercadoPagoPayment) {
   const paymentId = String(payment.id || "").trim() || null;
   const paymentStatus = String(payment.status || "").trim() || null;
   const paymentAmount = Number(payment.transaction_amount || 0);
+  const paymentInstallments = Number.isFinite(Number(payment.installments)) && Number(payment.installments) > 0
+    ? Math.max(1, Math.trunc(Number(payment.installments)))
+    : null;
   const db = getDatabase();
   const client = await db.pool.connect();
 
@@ -75,18 +79,20 @@ export async function reconcileMercadoPagoPayment(payment: MercadoPagoPayment) {
            payment_status_detail = $3,
            payment_method_id = $4,
            payment_type_id = $5,
-           payment_external_reference = $6,
-           payment_amount = $7,
-           payment_approved_at = $8,
-           payment_updated_at = $9,
+           payment_installments = COALESCE($6, payment_installments),
+           payment_external_reference = $7,
+           payment_amount = $8,
+           payment_approved_at = $9,
+           payment_updated_at = $10,
            updated_at = NOW()
-       WHERE id = $10`,
+       WHERE id = $11`,
       [
         paymentId,
         paymentStatus,
         String(payment.status_detail || "").trim() || null,
         String(payment.payment_method_id || "").trim() || null,
         String(payment.payment_type_id || "").trim() || null,
+        paymentInstallments,
         externalReference,
         Number.isFinite(paymentAmount) ? paymentAmount : null,
         payment.date_approved || null,
