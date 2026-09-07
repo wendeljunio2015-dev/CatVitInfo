@@ -68,6 +68,27 @@ export default function MercadoPagoCheckout({ amount, customerName, customerPhon
   const statusController = useRef<any>(null);
   const approvedHandled = useRef(false);
 
+  const finishApprovedPayment = async (result: ApprovedResult) => {
+    if (approvedHandled.current) return;
+    approvedHandled.current = true;
+    setPaymentState("approved");
+
+    // O Status Screen do Mercado Pago pode tentar se atualizar no mesmo instante
+    // em que o webhook confirma o Pix. Desmontamos o Brick antes de trocar a tela
+    // do carrinho para evitar uma disputa de renderização durante a aprovação.
+    if (statusController.current) {
+      const controller = statusController.current;
+      statusController.current = null;
+      try {
+        await controller.unmount();
+      } catch {
+        // A aprovação do servidor é a fonte de verdade; falha ao desmontar a UI não bloqueia o pedido.
+      }
+    }
+
+    onApproved(result);
+  };
+
   useEffect(() => {
     let cancelled = false;
     const publicKey = process.env.NEXT_PUBLIC_MERCADO_PAGO_PUBLIC_KEY;
@@ -145,9 +166,8 @@ export default function MercadoPagoCheckout({ amount, customerName, customerPhon
                     },
                   });
 
-                  if (result.approved && result.stockDeducted && !approvedHandled.current) {
-                    approvedHandled.current = true;
-                    onApproved({ orderNumber: result.orderNumber, whatsappUrl: result.whatsappUrl || "" });
+                  if (result.approved && result.stockDeducted) {
+                    await finishApprovedPayment({ orderNumber: result.orderNumber, whatsappUrl: result.whatsappUrl || "" });
                   }
                   resolve();
                 } catch (submissionError) {
@@ -185,12 +205,12 @@ export default function MercadoPagoCheckout({ amount, customerName, customerPhon
         const response = await fetch(`/api/mercadopago/status?orderId=${encodeURIComponent(orderId)}`, { cache: "no-store" });
         if (!response.ok || !active) return;
         const result = await response.json();
-        setPaymentState(String(result.paymentStatus || "em processamento"));
+        const latestState = String(result.paymentStatus || "em processamento");
+        setPaymentState(latestState);
         const latestWhatsappUrl = result.whatsappUrl ? String(result.whatsappUrl) : whatsappUrl;
         if (result.whatsappUrl) setWhatsappUrl(latestWhatsappUrl);
-        if (result.approved && result.stockDeducted && !approvedHandled.current) {
-          approvedHandled.current = true;
-          onApproved({ orderNumber: String(result.orderNumber || orderNumber), whatsappUrl: latestWhatsappUrl });
+        if (result.approved && result.stockDeducted) {
+          await finishApprovedPayment({ orderNumber: String(result.orderNumber || orderNumber), whatsappUrl: latestWhatsappUrl });
         }
       } catch {
         // O Status Screen continua funcionando mesmo se uma consulta temporária falhar.
@@ -204,6 +224,8 @@ export default function MercadoPagoCheckout({ amount, customerName, customerPhon
       window.clearInterval(interval);
     };
   }, [orderId, orderNumber, whatsappUrl, onApproved]);
+
+  const paymentApproved = paymentState.toLowerCase() === "approved" || paymentState.toLowerCase() === "aprovado";
 
   return (
     <div className="mt-4 rounded-2xl border border-blue-500/30 bg-zinc-950 p-4 sm:p-6">
@@ -219,12 +241,21 @@ export default function MercadoPagoCheckout({ amount, customerName, customerPhon
       {error ? <p className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 p-3 text-sm font-bold text-red-300">{error}</p> : null}
       {mode === "loading" ? <p className="py-8 text-center text-sm text-zinc-400">Carregando checkout seguro...</p> : null}
       <div id="paymentBrick_container" className={mode === "payment" ? "block" : "hidden"} />
-      <div id="statusScreenBrick_container" className={mode === "status" ? "block" : "hidden"} />
+      <div id="statusScreenBrick_container" className={mode === "status" && !paymentApproved ? "block" : "hidden"} />
 
       {mode === "status" && whatsappUrl ? (
         <div className="mt-4 rounded-xl border border-green-500/20 bg-green-500/10 p-4">
-          <p className="text-sm leading-6 text-zinc-300">Após a aprovação, use o botão abaixo para abrir a confirmação do pedido no WhatsApp do vendedor responsável.</p>
-          <a href={whatsappUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-lg bg-green-600 px-4 py-2.5 text-sm font-black text-white hover:bg-green-500">Abrir confirmação no WhatsApp</a>
+          {paymentApproved ? (
+            <>
+              <p className="text-sm leading-6 text-zinc-300">Pagamento confirmado pelo servidor. Se desejar, envie também a confirmação manual do pedido ao vendedor.</p>
+              <a href={whatsappUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-lg bg-green-600 px-4 py-2.5 text-sm font-black text-white hover:bg-green-500">Confirmar pedido pelo WhatsApp</a>
+            </>
+          ) : (
+            <>
+              <p className="text-sm leading-6 text-zinc-300">A confirmação manual pelo WhatsApp será liberada somente depois que o Mercado Pago confirmar o pagamento.</p>
+              <button type="button" disabled className="mt-3 inline-flex cursor-not-allowed rounded-lg bg-zinc-700 px-4 py-2.5 text-sm font-black text-zinc-400 opacity-70">Aguardando confirmação do pagamento</button>
+            </>
+          )}
         </div>
       ) : null}
     </div>
