@@ -5,29 +5,35 @@ import { SELLER_COOKIE, SELLER_COOKIE_MAX_AGE, SELLER_FALLBACK_COOKIE } from "@/
 export const dynamic = "force-dynamic";
 
 const PRODUCTION_ORIGIN = "https://catvitinfo.netlify.app";
+const PRODUCTION_HOST = "catvitinfo.netlify.app";
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char] || char));
 }
 
-function isNetlifyDeployPreviewHost(hostname: string) {
+function getExternalHostname(request: Request) {
+  const forwardedHost = request.headers.get("x-forwarded-host")?.split(",")[0]?.trim();
+  const host = forwardedHost || request.headers.get("host") || "";
+  return host.split(":")[0].toLowerCase();
+}
+
+function isNetlifyDeployHost(hostname: string) {
   return hostname.endsWith("--catvitinfo.netlify.app");
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const requestUrl = new URL(request.url);
+  const externalHostname = getExternalHostname(request);
 
-  if (isNetlifyDeployPreviewHost(requestUrl.hostname)) {
-    const canonicalSellerUrl = new URL(`/v/${encodeURIComponent(slug)}`, PRODUCTION_ORIGIN);
-    return NextResponse.redirect(canonicalSellerUrl, 302);
+  if (externalHostname && externalHostname !== PRODUCTION_HOST && isNetlifyDeployHost(externalHostname)) {
+    return NextResponse.redirect(new URL(`/v/${encodeURIComponent(slug)}`, PRODUCTION_ORIGIN), 302);
   }
 
   const db = getDatabase();
   const rows = await db.sql`SELECT id,name FROM sellers WHERE slug=${slug} AND active=TRUE LIMIT 1`;
 
   if (!rows.length) {
-    const response = NextResponse.redirect(new URL("/", request.url), 302);
+    const response = NextResponse.redirect(new URL("/", PRODUCTION_ORIGIN), 302);
     response.cookies.set(SELLER_COOKIE, "", { path: "/", maxAge: 0 });
     response.cookies.set(SELLER_FALLBACK_COOKIE, "", { path: "/", maxAge: 0 });
     response.headers.set("Cache-Control", "no-store, max-age=0");
@@ -36,7 +42,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
 
   const sellerId = String(rows[0].id);
   const sellerName = String(rows[0].name);
-  const destination = new URL("/", request.url).toString();
+  const destination = `${PRODUCTION_ORIGIN}/`;
   const secure = process.env.NODE_ENV === "production";
 
   const html = `<!doctype html>
