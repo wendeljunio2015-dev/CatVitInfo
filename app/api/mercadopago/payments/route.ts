@@ -36,6 +36,16 @@ function normalizeEmail(value: string) {
   return value.trim().toLowerCase().slice(0, 180);
 }
 
+function paymentDescription(methodId: unknown, typeId: unknown, installments: unknown) {
+  const method = String(methodId || "").trim();
+  const type = String(typeId || "").trim();
+  const count = Math.max(1, Number(installments) || 1);
+  if (method === "pix" || type === "bank_transfer") return "Pix à vista";
+  if (type === "credit_card") return count > 1 ? `Cartão de crédito em ${count}x` : "Cartão de crédito à vista";
+  if (type === "debit_card") return "Cartão de débito à vista";
+  return method ? `${method}${count > 1 ? ` em ${count}x` : ""}` : "Mercado Pago";
+}
+
 export async function POST(request: Request) {
   const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN;
   if (!accessToken) return NextResponse.json({ error: "Mercado Pago não configurado." }, { status: 503 });
@@ -203,6 +213,8 @@ export async function POST(request: Request) {
 
     const reconciliation = await reconcileMercadoPagoPayment(payment);
     const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+    const installments = Math.max(1, Number(payment.installments || formData.installments) || 1);
+    const methodText = paymentDescription(payment.payment_method_id || paymentMethodId, payment.payment_type_id || formData.payment_type_id, installments);
     const lines = [
       `Olá! Compra ${orderNumber} realizada pelo catálogo da Vitória Informática.`,
       sellerName ? `Atendimento: ${sellerName}` : "",
@@ -212,7 +224,8 @@ export async function POST(request: Request) {
       ...items.map((item) => `• ${item.quantity}x ${item.name} — ${money.format(item.subtotal)}`),
       "",
       `Total: ${money.format(total)}`,
-      `Pagamento Mercado Pago: ${String(payment.status || "em processamento")}`,
+      `Forma de pagamento: ${methodText}`,
+      `Status do pagamento: ${String(payment.status || "em processamento")}`,
       `ID do pagamento: ${String(payment.id)}`,
     ].filter(Boolean);
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
@@ -224,6 +237,10 @@ export async function POST(request: Request) {
       paymentId: String(payment.id),
       status: payment.status || null,
       statusDetail: payment.status_detail || null,
+      paymentMethodId: payment.payment_method_id || paymentMethodId || null,
+      paymentTypeId: payment.payment_type_id || formData.payment_type_id || null,
+      paymentInstallments: installments,
+      paymentDescription: methodText,
       threeDsInfo: payment.three_ds_info || null,
       whatsappUrl,
       approved: reconciliation.approved,
