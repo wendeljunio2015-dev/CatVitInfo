@@ -19,41 +19,41 @@ const storeMapEmbedUrl = "https://www.google.com/maps?q=Vit%C3%B3ria%20Inform%C3
 
 export default function Footer() {
   return (
-    <footer className="border-t border-zinc-800 bg-zinc-950">
-      <div className="mx-auto max-w-7xl px-6 py-10 text-sm text-zinc-400">
-        <div className="grid gap-8 lg:grid-cols-[1fr_1.15fr] lg:items-start">
-          <div>
+    <footer className="w-full min-w-0 overflow-x-hidden border-t border-zinc-800 bg-zinc-950">
+      <div className="mx-auto w-full max-w-7xl min-w-0 px-4 py-10 text-sm text-zinc-400 sm:px-6">
+        <div className="grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)] lg:items-start">
+          <div className="min-w-0">
             <p className="font-bold text-white">Vitória Informática • Goiânia - GO</p>
-            <p className="mt-2 leading-6">Atendimento e orçamento pelo WhatsApp. Consulte disponibilidade e garantia de cada produto.</p>
+            <p className="mt-2 break-words leading-6">Atendimento e orçamento pelo WhatsApp. Consulte disponibilidade e garantia de cada produto.</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <a href="/whatsapp" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-xs font-black text-white hover:bg-green-500"><WhatsAppIcon />WhatsApp</a>
               <a href="https://www.instagram.com/vitoria_infor/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-pink-500/40 px-3 py-2 text-xs font-black text-pink-300 hover:bg-pink-500/10"><InstagramIcon />Instagram</a>
             </div>
-            <p className="mt-5 leading-6">Não realizamos envio para todo o Brasil. Consulte as opções disponíveis para sua região.</p>
+            <p className="mt-5 break-words leading-6">Não realizamos envio para todo o Brasil. Consulte as opções disponíveis para sua região.</p>
           </div>
 
-          <section aria-labelledby="store-location-title" className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4 shadow-xl shadow-black/10 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
+          <section aria-labelledby="store-location-title" className="min-w-0 w-full overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4 shadow-xl shadow-black/10 sm:p-5">
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
                 <p className="text-xs font-black uppercase tracking-widest text-blue-400">Nossa localização</p>
-                <h2 id="store-location-title" className="mt-1 text-lg font-black text-white">Vitória Informática em Goiânia</h2>
+                <h2 id="store-location-title" className="mt-1 break-words text-lg font-black text-white">Vitória Informática em Goiânia</h2>
               </div>
-              <a href={storeLocationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-xs font-black text-white shadow-lg shadow-green-950/30 hover:bg-green-500"><LocationIcon />Abrir no GPS</a>
+              <a href={storeLocationUrl} target="_blank" rel="noopener noreferrer" className="inline-flex max-w-full items-center gap-2 rounded-xl bg-green-600 px-4 py-2.5 text-xs font-black text-white shadow-lg shadow-green-950/30 hover:bg-green-500"><LocationIcon />Abrir no GPS</a>
             </div>
 
-            <div className="mt-4 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950">
-              <div className="relative aspect-[16/10] min-h-[240px] w-full sm:aspect-video">
+            <div className="mt-4 w-full min-w-0 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950">
+              <div className="relative h-[240px] w-full min-w-0 sm:h-auto sm:aspect-video">
                 <iframe
                   src={storeMapEmbedUrl}
                   title="Mapa da localização da Vitória Informática em Goiânia"
-                  className="absolute inset-0 h-full w-full border-0"
+                  className="absolute inset-0 block h-full max-w-full w-full border-0"
                   loading="lazy"
                   allowFullScreen
                   referrerPolicy="no-referrer-when-downgrade"
                 />
               </div>
             </div>
-            <p className="mt-3 text-xs leading-5 text-zinc-500">Use o botão acima para abrir a rota diretamente no Google Maps do celular.</p>
+            <p className="mt-3 break-words text-xs leading-5 text-zinc-500">Use o botão acima para abrir a rota diretamente no Google Maps do celular.</p>
           </section>
         </div>
       </div>
