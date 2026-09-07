@@ -2,18 +2,13 @@ import { getDatabase } from "@netlify/database";
 import { NextResponse } from "next/server";
 import { getAuthenticatedCustomerId } from "@/lib/customer-auth";
 import { getSellerRef } from "@/lib/seller-ref";
+import { QUOTE_DRAFT_COOKIE, QUOTE_DRAFT_MAX_AGE, signQuoteDraft } from "@/lib/quote-draft";
 
-const storeWhatsApp = "5562994780830";
 type RequestedItem = { productId?: string; quantity?: number };
 
-function makeOrderNumber() {
-  const now = new Date();
-  const date = now.toISOString().slice(0, 10).replace(/-/g, "");
-  const suffix = crypto.randomUUID().slice(0, 6).toUpperCase();
-  return `VI-${date}-${suffix}`;
+function normalizePhone(value: string) {
+  return value.replace(/\D/g, "").slice(0, 20);
 }
-
-function normalizePhone(value: string) { return value.replace(/\D/g, "").slice(0, 20); }
 
 export async function POST(request: Request) {
   try {
@@ -23,14 +18,19 @@ export async function POST(request: Request) {
     let customerPhone = normalizePhone(String(body.customerPhone || "")) || null;
     let customerEmail = String(body.customerEmail || "").trim().toLowerCase().slice(0, 180) || null;
 
-    const normalized = requestedItems.map((item) => ({ productId: String(item.productId || "").trim(), quantity: Math.max(1, Math.min(99, Number(item.quantity) || 1)) })).filter((item) => item.productId);
+    const normalized = requestedItems
+      .map((item) => ({
+        productId: String(item.productId || "").trim(),
+        quantity: Math.max(1, Math.min(99, Number(item.quantity) || 1)),
+      }))
+      .filter((item) => item.productId);
+
     if (!normalized.length) return NextResponse.json({ error: "Carrinho vazio" }, { status: 400 });
 
     const db = getDatabase();
     const ids = normalized.map((item) => item.productId);
-    const rows = await db.sql`SELECT id, name, price, cost_price, stock_quantity FROM products WHERE id = ANY(${ids}::text[])`;
+    const rows = await db.sql`SELECT id, name, stock_quantity FROM products WHERE id = ANY(${ids}::text[])`;
     const productMap = new Map(rows.map((row: any) => [String(row.id), row]));
-    const items = [] as Array<{ productId: string; name: string; quantity: number; unitPrice: number; subtotal: number; unitCost: number | null; costSubtotal: number | null }>;
 
     for (const requested of normalized) {
       const product = productMap.get(requested.productId) as any;
@@ -38,9 +38,6 @@ export async function POST(request: Request) {
       const available = Number(product.stock_quantity ?? 0);
       if (available <= 0) return NextResponse.json({ error: `${String(product.name)} está indisponível no momento. Remova o item do carrinho.` }, { status: 409 });
       if (requested.quantity > available) return NextResponse.json({ error: `${String(product.name)} possui apenas ${available} unidade(s) disponível(is). Ajuste a quantidade no carrinho.` }, { status: 409 });
-      const unitPrice = Number(product.price);
-      const unitCost = product.cost_price == null ? null : Number(product.cost_price);
-      items.push({ productId: requested.productId, name: String(product.name), quantity: requested.quantity, unitPrice, subtotal: unitPrice * requested.quantity, unitCost, costSubtotal: unitCost == null ? null : unitCost * requested.quantity });
     }
 
     let customerId = await getAuthenticatedCustomerId();
@@ -50,46 +47,36 @@ export async function POST(request: Request) {
         customerName = String(logged[0].name || customerName || "Cliente");
         customerPhone = logged[0].phone ? String(logged[0].phone) : customerPhone;
         customerEmail = logged[0].email ? String(logged[0].email) : customerEmail;
-      } else customerId = null;
-    }
-
-    if (!customerId && customerName && customerPhone) {
-      const existing = await db.sql`SELECT id FROM customers WHERE phone=${customerPhone} LIMIT 1`;
-      if (existing.length) {
-        customerId = String(existing[0].id);
-        await db.sql`UPDATE customers SET name=${customerName}, email=COALESCE(${customerEmail}, email), updated_at=NOW() WHERE id=${customerId}`;
       } else {
-        customerId = crypto.randomUUID();
-        await db.sql`INSERT INTO customers (id,name,phone,email,city) VALUES (${customerId},${customerName},${customerPhone},${customerEmail},'Goiânia - GO')`;
+        customerId = null;
       }
     }
 
-    let sellerId: string | null = null;
-    let sellerName: string | null = null;
-    let sellerCommissionRate: number | null = null;
-    let whatsappNumber = storeWhatsApp;
     const sellerRef = await getSellerRef();
-    if (sellerRef) {
-      const sellerRows = await db.sql`SELECT id,name,phone,commission_rate FROM sellers WHERE id=${sellerRef} AND active=TRUE LIMIT 1`;
-      if (sellerRows.length) {
-        sellerId = String(sellerRows[0].id);
-        sellerName = String(sellerRows[0].name);
-        sellerCommissionRate = Number(sellerRows[0].commission_rate);
-        whatsappNumber = String(sellerRows[0].phone || storeWhatsApp).replace(/\D/g, "");
-      }
-    }
+    const token = signQuoteDraft({
+      customerName,
+      customerPhone,
+      customerEmail,
+      customerId,
+      sellerRef,
+      items: normalized,
+      expiresAt: Date.now() + QUOTE_DRAFT_MAX_AGE * 1000,
+    });
 
-    const total = items.reduce((sum, item) => sum + item.subtotal, 0);
-    const id = crypto.randomUUID();
-    const orderNumber = makeOrderNumber();
-    await db.sql`INSERT INTO orders (id,order_number,customer_id,customer_name,items,total,status,source,seller_id,seller_name,seller_commission_rate) VALUES (${id},${orderNumber},${customerId},${customerName},${JSON.stringify(items)}::jsonb,${total},'novo','whatsapp',${sellerId},${sellerName},${sellerCommissionRate})`;
-
-    const money = new Intl.NumberFormat("pt-BR", { style:"currency", currency:"BRL" });
-    const lines = [`Olá! Gostaria de solicitar o orçamento ${orderNumber} na Vitória Informática:`, sellerName ? `Atendimento: ${sellerName}` : "", customerName ? `Cliente: ${customerName}` : "", customerPhone ? `WhatsApp: ${customerPhone}` : "", "", ...items.map((item) => `• ${item.quantity}x ${item.name} — ${money.format(item.subtotal)}`), "", `Total estimado: ${money.format(total)}`, "", "Por favor, confirme disponibilidade, garantia e condições de retirada/entrega em Goiânia."].filter(Boolean);
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(lines.join("\n"))}`;
-    return NextResponse.json({ ok:true, orderNumber, total, customerId, sellerId, whatsappUrl });
+    const response = NextResponse.json({
+      ok: true,
+      whatsappUrl: new URL("/api/orders/open", request.url).toString(),
+    });
+    response.cookies.set(QUOTE_DRAFT_COOKIE, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: QUOTE_DRAFT_MAX_AGE,
+    });
+    return response;
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Não foi possível registrar o orçamento.";
+    const message = error instanceof Error ? error.message : "Não foi possível preparar o orçamento.";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }
