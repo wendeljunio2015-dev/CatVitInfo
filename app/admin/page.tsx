@@ -4,6 +4,7 @@ import { getCatalogProducts } from "@/lib/catalog-db";
 import { productCategories } from "@/data/categories";
 import AdminDeleteButton from "@/components/AdminDeleteButton";
 import AdminImageInput from "@/components/AdminImageInput";
+import AdminAutoGrowTextarea from "@/components/AdminAutoGrowTextarea";
 
 export const metadata = { title: "Painel Administrativo", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -93,8 +94,9 @@ export default async function AdminPage() {
           <select name="badge" className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3"><option value="">Sem selo</option><option>Novo</option><option>Promoção</option><option>Destaque</option></select>
           <AdminImageInput />
           <input name="image" placeholder="Ou cole uma URL de imagem (opcional)" className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 md:col-span-2" />
-          <textarea name="description" placeholder="Descrição" rows={4} className="rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 md:col-span-2" />
-          <div className="md:col-span-2"><textarea name="specs" placeholder="Especificações técnicas — uma por linha" rows={6} className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3" /></div>
+          <AdminAutoGrowTextarea name="description" placeholder="Descrição" minRows={5} className="min-h-36 rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 md:col-span-2" />
+          <div className="md:col-span-2"><AdminAutoGrowTextarea name="specs" placeholder="Especificações técnicas — uma por linha" minRows={7} className="min-h-48 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3" /></div>
+          <p className="text-xs text-zinc-500 md:col-span-2">No celular, os campos de texto aumentam automaticamente conforme você cola ou digita, facilitando tocar diretamente no trecho que deseja editar.</p>
           <label className="flex items-center gap-3"><input type="checkbox" name="featured" /> Mostrar como destaque</label>
           <button disabled={!databaseReady} className="rounded-xl bg-blue-600 px-5 py-3 font-black disabled:bg-zinc-700">Cadastrar produto</button>
         </form>
