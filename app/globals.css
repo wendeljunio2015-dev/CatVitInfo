@@ -46,20 +46,3 @@ span {
 }
 
 button, a { transition: 160ms ease; }
-
-@media (max-width: 640px) {
-  h1 {
-    font-size: clamp(1.9rem, 8vw, 2.35rem);
-    line-height: 1.1;
-  }
-
-  h2 {
-    font-size: clamp(1.5rem, 6.5vw, 1.85rem);
-    line-height: 1.15;
-  }
-
-  h3 {
-    font-size: clamp(1.1rem, 5vw, 1.3rem);
-    line-height: 1.2;
-  }
-}
