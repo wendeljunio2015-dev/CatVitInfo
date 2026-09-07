@@ -31,20 +31,21 @@ function formatMoney(value: unknown) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(value || 0));
 }
 
-function paymentLabel(methodId: unknown, typeId: unknown) {
+function paymentLabel(methodId: unknown, typeId: unknown, installments: unknown) {
   const method = String(methodId || "").trim();
   const type = String(typeId || "").trim();
-  if (method === "pix" || type === "bank_transfer") return "Pix aprovado";
-  if (type === "credit_card") return "Cartão de crédito aprovado";
-  if (type === "debit_card") return "Cartão de débito aprovado";
-  return method ? `${method} aprovado` : "Pagamento aprovado";
+  const count = Math.max(1, Number(installments) || 1);
+  if (method === "pix" || type === "bank_transfer") return "Pix à vista - aprovado";
+  if (type === "credit_card") return count > 1 ? `Cartão de crédito em ${count}x - aprovado` : "Cartão de crédito à vista - aprovado";
+  if (type === "debit_card") return "Cartão de débito à vista - aprovado";
+  return method ? `${method}${count > 1 ? ` em ${count}x` : ""} - aprovado` : "Pagamento aprovado";
 }
 
 async function getApprovedOrder(orderId: string) {
   const db = getDatabase();
   const rows = await db.sql`
     SELECT o.id, o.order_number, o.customer_id, o.customer_name, o.items, o.total,
-           o.payment_id, o.payment_status, o.payment_method_id, o.payment_type_id,
+           o.payment_id, o.payment_status, o.payment_method_id, o.payment_type_id, o.payment_installments,
            o.stock_deducted_at, o.seller_id, o.seller_name,
            c.phone AS customer_phone, s.phone AS seller_phone
     FROM orders o
@@ -77,7 +78,7 @@ async function createPendingNotification(order: any) {
     customerPhone: digits(order.customer_phone) || "Não informado",
     items: itemSummary || "Itens do pedido",
     total: formatMoney(order.total),
-    payment: paymentLabel(order.payment_method_id, order.payment_type_id),
+    payment: paymentLabel(order.payment_method_id, order.payment_type_id, order.payment_installments),
     paymentId: String(order.payment_id || "Não informado"),
     sellerName: order.seller_name ? String(order.seller_name) : null,
   };
